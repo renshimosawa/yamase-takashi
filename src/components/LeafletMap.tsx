@@ -36,40 +36,63 @@ export default function LeafletMap({
   const [userPosition, setUserPosition] = useState<LatLngExpression | null>(
     null
   );
-  const postIcon = useMemo(() => {
-    if (typeof window === "undefined") {
-      return undefined;
-    }
 
-    return L.divIcon({
-      className: "post-marker-icon",
-      html: '<span class="marker-emoji">📝</span>',
-      iconSize: [32, 32],
-      iconAnchor: [16, 28],
-    });
-  }, []);
+  const fallbackEmoji = "📍";
+  const emojiIconCache = useRef(new Map<string, L.DivIcon>());
 
-  const clusterIconCache = useRef(new Map<number, L.DivIcon>());
+  const getEmojiIcon = useCallback(
+    (emoji?: string | null) => {
+      if (typeof window === "undefined") {
+        return undefined;
+      }
 
-  const getClusterIcon = useCallback((count: number) => {
+      const key = emoji && emoji.trim() ? emoji : fallbackEmoji;
+      const cache = emojiIconCache.current;
+
+      if (!cache.has(key)) {
+        cache.set(
+          key,
+          L.divIcon({
+            className: "post-marker-icon",
+            html: `<span class="marker-emoji-pin">${key}</span>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 30],
+          })
+        );
+      }
+
+      return cache.get(key);
+    },
+    [fallbackEmoji]
+  );
+
+  const clusterIconCache = useRef(new Map<string, L.DivIcon>());
+
+  const getClusterIcon = useCallback((emojis: string[]) => {
     if (typeof window === "undefined") {
       return undefined;
     }
 
     const cache = clusterIconCache.current;
-    if (!cache.has(count)) {
+    const key = emojis.join("|") || "_empty";
+    if (!cache.has(key)) {
+      const grid = emojis
+        .slice(0, 9)
+        .map((emoji, index) => `<span data-idx="${index}">${emoji}</span>`) // simple span grid
+        .join("");
+
       cache.set(
-        count,
+        key,
         L.divIcon({
           className: "post-cluster-icon",
-          html: `<span class="cluster-circle">${count}</span>`,
-          iconSize: [36, 36],
-          iconAnchor: [18, 18],
+          html: `<div class="cluster-circle"><div class="cluster-emoji-grid">${grid}</div></div>`,
+          iconSize: [48, 48],
+          iconAnchor: [24, 24],
         })
       );
     }
 
-    return cache.get(count);
+    return cache.get(key);
   }, []);
 
   useEffect(() => {
@@ -188,32 +211,34 @@ export default function LeafletMap({
             fillOpacity: 0.6,
           }}
         />
-        {singleMarkers.map(({ latitude, longitude, post }) => (
-          <Marker
-            key={post.id}
-            position={[latitude, longitude]}
-            icon={postIcon}
-          >
-            <Tooltip
-              direction="top"
-              offset={[0, -10]}
-              opacity={1}
-              permanent
-              className="!bg-white !text-black !rounded-lg !px-3 !py-2 !text-xs !shadow"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{post.emoji ?? ""}</span>
-                <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs text-black">
-                  {post.intensity !== null ? `Lv.${post.intensity}` : "Lv.-"}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-black/80">{post.description}</p>
-            </Tooltip>
-          </Marker>
-        ))}
+        {singleMarkers.map(({ latitude, longitude, post }) => {
+          const icon = getEmojiIcon(post.emoji ?? undefined);
+          return (
+            <Marker key={post.id} position={[latitude, longitude]} icon={icon}>
+              <Tooltip
+                direction="top"
+                offset={[0, -32]}
+                opacity={1}
+                permanent
+                className="!bg-white/95 !text-black !rounded-xl !px-4 !py-2 !text-xs !shadow-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{post.emoji ?? fallbackEmoji}</span>
+                  <span className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] text-black">
+                    {post.intensity !== null ? `Lv.${post.intensity}` : "Lv.-"}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-black/80">{post.description}</p>
+              </Tooltip>
+            </Marker>
+          );
+        })}
         {clusterMarkers.map(({ latitude, longitude, posts: clusterPosts }) => {
           const count = clusterPosts?.length ?? 0;
-          const icon = getClusterIcon(count);
+          const emojiList = (clusterPosts ?? []).map(
+            (p) => p.emoji ?? fallbackEmoji
+          );
+          const icon = getClusterIcon(emojiList);
 
           return (
             <Marker
@@ -223,19 +248,25 @@ export default function LeafletMap({
             >
               <Tooltip
                 direction="top"
-                offset={[0, -10]}
+                offset={[0, -30]}
                 opacity={1}
                 permanent
-                className="!bg-white !text-black !rounded-lg !px-3 !py-2 !text-xs !shadow"
+                className="!bg-white/95 !text-black !rounded-xl !px-4 !py-2 !text-xs !shadow-lg"
               >
-                <ul className="max-h-48 w-48 overflow-auto">
+                <p className="mb-2 text-xs font-semibold text-black/60">
+                  {count} 件の投稿
+                </p>
+                <ul className="max-h-48 w-48 space-y-2 overflow-auto">
                   {clusterPosts?.map((clusterPost) => (
-                    <li key={clusterPost.id} className="mb-2">
-                      <div className="flex items-center gap-2 text-xs text-black/70">
-                        <span className="text-base">
-                          {clusterPost.emoji ?? ""}
+                    <li
+                      key={clusterPost.id}
+                      className="rounded-lg bg-white/70 p-2"
+                    >
+                      <div className="mb-1 flex items-center gap-2 text-xs text-black/70">
+                        <span className="text-lg">
+                          {clusterPost.emoji ?? fallbackEmoji}
                         </span>
-                        <span>
+                        <span className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] text-black">
                           {clusterPost.intensity !== null
                             ? `Lv.${clusterPost.intensity}`
                             : "Lv.-"}
