@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 import { fetchCurrentTemperature, fetchHachinoheForecast } from "@/lib/weather";
+import Header from "@/components/Header";
 import FloatingPostButton from "@/components/FloatingPostButton";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import WeatherCircle from "@/components/WeatherCircle";
@@ -190,7 +191,8 @@ export default function Home() {
       <div className="absolute inset-0">
         <OpenStreetMap posts={posts} onMarkerSelect={setSelectedGroup} />
       </div>
-      <aside className="pointer-events-none absolute left-6 top-6 z-[1000] flex flex-col gap-4">
+      <Header session={session ?? null} status={status} />
+      <aside className="pointer-events-none absolute left-6 top-32 z-[1000] flex flex-col gap-4">
         <WeatherCircle
           icon={weatherCard.weather}
           label="天気"
@@ -207,9 +209,6 @@ export default function Home() {
           tooltip={forecast?.wind ?? weatherCard.tooltip}
         />
       </aside>
-      <div className="pointer-events-auto absolute right-6 top-6 z-[1000]">
-        <UserActions session={session} status={status} />
-      </div>
       <div className="pointer-events-auto absolute bottom-8 right-8 z-[1000]">
         <FloatingPostButton
           onSubmitted={fetchPosts}
@@ -221,84 +220,6 @@ export default function Home() {
         group={selectedGroup}
         onClose={() => setSelectedGroup(null)}
       />
-    </div>
-  );
-}
-
-type UserActionsProps = {
-  session: ReturnType<typeof useSession>["data"];
-  status: ReturnType<typeof useSession>["status"];
-};
-
-function UserActions({ session, status }: UserActionsProps) {
-  const isLoading = status === "loading";
-  const isAuthenticated = status === "authenticated" && session?.user;
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isMenuOpen]);
-
-  if (isLoading) {
-    return <span className="text-white/70">認証確認中...</span>;
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <button
-        type="button"
-        onClick={() => signIn("google")}
-        className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
-      >
-        Google でログイン
-      </button>
-    );
-  }
-
-  const displayName = session.user?.name ?? session.user?.email ?? "ユーザー";
-
-  return (
-    <div className="relative" ref={menuRef}>
-      <button
-        type="button"
-        onClick={() => setIsMenuOpen((prev) => !prev)}
-        className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-white/90"
-        aria-haspopup="true"
-        aria-expanded={isMenuOpen}
-      >
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/10 text-sm font-semibold uppercase">
-          {displayName.charAt(0)}
-        </span>
-        <span className="max-w-[12rem] truncate">{displayName}</span>
-      </button>
-      {isMenuOpen && (
-        <div className="absolute right-0 mt-3 w-48 rounded-xl bg-black/80 p-3 text-white shadow-xl backdrop-blur">
-          <button
-            type="button"
-            onClick={() => {
-              setIsMenuOpen(false);
-              void signOut({ callbackUrl: "/" });
-            }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-white/10"
-          >
-            🚪 ログアウト
-          </button>
-        </div>
-      )}
     </div>
   );
 }
