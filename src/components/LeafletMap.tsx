@@ -41,9 +41,9 @@ export default function LeafletMap({
   posts = [],
   onMarkerSelect,
 }: LeafletMapProps) {
-  const [userPosition, setUserPosition] = useState<LatLngExpression | null>(
-    null
-  );
+  const [userPosition, setUserPosition] = useState<LatLngExpression | null>([
+    40.5086, 141.4882,
+  ]);
 
   const fallbackEmoji = "📍";
   const emojiIconCache = useRef(new Map<string, L.DivIcon>());
