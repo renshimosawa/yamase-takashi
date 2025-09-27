@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 import { fetchHachinoheForecast } from "@/lib/weather";
@@ -80,29 +80,44 @@ export default function Home() {
     };
   }, []);
 
-  const headline = useMemo(() => {
+  const weatherCard = useMemo(() => {
     if (isLoading) {
-      return "天気情報を取得中...";
+      return {
+        weather: "⛅",
+        temperature: "--",
+        wind: "🌀",
+        tooltip: "天気情報を取得中...",
+      } as const;
     }
 
-    if (error) {
-      return `天気情報の取得に失敗しました: ${error}`;
+    if (error || !forecast) {
+      return {
+        weather: "⚠️",
+        temperature: "--",
+        wind: "🧭",
+        tooltip: error ? `エラー: ${error}` : "天気情報が利用できません。",
+      } as const;
     }
 
-    if (!forecast) {
-      return "天気情報が利用できません。";
-    }
+    const windArrow = getWindDirectionArrow(forecast.wind);
+    const temperature = `${formatTemperature(
+      forecast.maxTemperature
+    )} / ${formatTemperature(forecast.minTemperature)}`;
 
-    const { weather, maxTemperature, minTemperature, wind } = forecast;
-    const temperatures = [
-      `最高 ${formatTemperature(maxTemperature)}`,
-      `最低 ${formatTemperature(minTemperature)}`,
-    ].join(" / ");
-    const windArrow = getWindDirectionArrow(wind);
-
-    return `今日の天気: ${weather}｜気温: ${temperatures}｜風向き: ${wind}${
-      windArrow ? ` ${windArrow}` : ""
-    }`;
+    return {
+      weather: forecast.weather.includes("雨")
+        ? "🌧️"
+        : forecast.weather.includes("晴")
+        ? "☀️"
+        : "⛅",
+      temperature,
+      wind: windArrow || "🧭",
+      tooltip: `天気: ${forecast.weather}\n最高: ${formatTemperature(
+        forecast.maxTemperature
+      )}\n最低: ${formatTemperature(forecast.minTemperature)}\n風向き: ${
+        forecast.wind
+      }`,
+    } as const;
   }, [error, forecast, isLoading]);
 
   const [posts, setPosts] = useState<MapPost[]>([]);
@@ -144,22 +159,33 @@ export default function Home() {
       <div className="absolute inset-0">
         <OpenStreetMap posts={posts} />
       </div>
-      <nav className="absolute left-1/2 bottom-6 z-[1000] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 rounded-2xl bg-black/60 text-white shadow-lg backdrop-blur">
-        <div
-          className="flex flex-col gap-4 px-6 py-4 text-sm"
-          aria-live="polite"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-base font-semibold">{headline}</span>
-            <UserActions session={session} status={status} />
-          </div>
-          <PostForm
-            onSubmitted={fetchPosts}
-            isLoading={isLoadingPosts}
-            error={postError}
-          />
-        </div>
-      </nav>
+      <aside className="pointer-events-none absolute left-6 top-6 z-[1000] flex flex-col gap-4">
+        <WeatherCircle
+          icon={weatherCard.weather}
+          label="天気"
+          tooltip={weatherCard.tooltip}
+        />
+        <WeatherCircle
+          icon={weatherCard.temperature}
+          label="気温"
+          tooltip={`最高/最低気温: ${weatherCard.temperature}`}
+        />
+        <WeatherCircle
+          icon={weatherCard.wind}
+          label="風向"
+          tooltip={forecast?.wind ?? weatherCard.tooltip}
+        />
+      </aside>
+      <div className="pointer-events-auto absolute right-6 top-6 z-[1000]">
+        <UserActions session={session} status={status} />
+      </div>
+      <div className="pointer-events-auto absolute bottom-8 right-8 z-[1000]">
+        <FloatingPostButton
+          onSubmitted={fetchPosts}
+          isLoading={isLoadingPosts}
+          error={postError}
+        />
+      </div>
     </div>
   );
 }
@@ -168,9 +194,10 @@ type PostFormProps = {
   onSubmitted: () => Promise<void> | void;
   isLoading: boolean;
   error: string | null;
+  onClose: () => void;
 };
 
-function PostForm({ onSubmitted, isLoading, error }: PostFormProps) {
+function PostForm({ onSubmitted, isLoading, error, onClose }: PostFormProps) {
   const { data: session, status } = useSession();
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -214,6 +241,7 @@ function PostForm({ onSubmitted, isLoading, error }: PostFormProps) {
       setContent("");
       setMessage("投稿しました。");
       await onSubmitted();
+      onClose();
     } catch (error) {
       console.error("Failed to submit post", error);
       setMessage(
@@ -259,6 +287,77 @@ function PostForm({ onSubmitted, isLoading, error }: PostFormProps) {
   );
 }
 
+type FloatingPostButtonProps = {
+  onSubmitted: () => Promise<void> | void;
+  isLoading: boolean;
+  error: string | null;
+};
+
+function FloatingPostButton({
+  onSubmitted,
+  isLoading,
+  error,
+}: FloatingPostButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-semibold text-black shadow-xl transition hover:bg-white/90"
+        aria-label="投稿する"
+      >
+        ✏️
+      </button>
+      {isOpen && (
+        <div
+          className="absolute bottom-20 right-0 w-80 rounded-2xl bg-black/80 p-6 text-white shadow-2xl backdrop-blur"
+          role="dialog"
+        >
+          <div className="mb-4 flex items-start justify-between">
+            <h2 className="text-lg font-semibold">投稿を作成</h2>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="text-white/60 transition hover:text-white"
+              aria-label="閉じる"
+            >
+              ✕
+            </button>
+          </div>
+          <PostForm
+            onSubmitted={onSubmitted}
+            isLoading={isLoading}
+            error={error}
+            onClose={() => setIsOpen(false)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+type WeatherCircleProps = {
+  icon: string;
+  label: string;
+  tooltip: string;
+};
+
+function WeatherCircle({ icon, label, tooltip }: WeatherCircleProps) {
+  return (
+    <div
+      className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-full bg-black/70 text-white shadow-lg backdrop-blur"
+      title={tooltip}
+    >
+      <span className="text-2xl">{icon}</span>
+      <span className="text-[10px] tracking-[0.2em] uppercase text-white/70">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 function getCurrentPosition(): Promise<GeolocationPosition | null> {
   if (typeof window === "undefined" || !navigator.geolocation) {
     return Promise.resolve(null);
@@ -285,6 +384,25 @@ type UserActionsProps = {
 function UserActions({ session, status }: UserActionsProps) {
   const isLoading = status === "loading";
   const isAuthenticated = status === "authenticated" && session?.user;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   if (isLoading) {
     return <span className="text-white/70">認証確認中...</span>;
@@ -295,7 +413,7 @@ function UserActions({ session, status }: UserActionsProps) {
       <button
         type="button"
         onClick={() => signIn("google")}
-        className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+        className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
       >
         Google でログイン
       </button>
@@ -305,22 +423,33 @@ function UserActions({ session, status }: UserActionsProps) {
   const displayName = session.user?.name ?? session.user?.email ?? "ユーザー";
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-semibold uppercase">
-          {displayName.charAt(0)}
-        </span>
-        <span className="max-w-[12rem] truncate font-medium">
-          {displayName}
-        </span>
-      </div>
+    <div className="relative" ref={menuRef}>
       <button
         type="button"
-        onClick={() => signOut({ callbackUrl: "/" })}
-        className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+        onClick={() => setIsMenuOpen((prev) => !prev)}
+        className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-white/90"
+        aria-haspopup="true"
+        aria-expanded={isMenuOpen}
       >
-        ログアウト
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/10 text-sm font-semibold uppercase">
+          {displayName.charAt(0)}
+        </span>
+        <span className="max-w-[12rem] truncate">{displayName}</span>
       </button>
+      {isMenuOpen && (
+        <div className="absolute right-0 mt-3 w-48 rounded-xl bg-black/80 p-3 text-white shadow-xl backdrop-blur">
+          <button
+            type="button"
+            onClick={() => {
+              setIsMenuOpen(false);
+              void signOut({ callbackUrl: "/" });
+            }}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-white/10"
+          >
+            🚪 ログアウト
+          </button>
+        </div>
+      )}
     </div>
   );
 }

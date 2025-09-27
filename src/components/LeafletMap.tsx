@@ -170,6 +170,7 @@ export default function LeafletMap({
         zoom={zoom}
         scrollWheelZoom
         className="h-full w-full"
+        zoomControl={false}
       >
         <MapViewUpdater position={defaultCenter} />
         <TileLayer
