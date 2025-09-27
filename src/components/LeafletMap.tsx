@@ -26,12 +26,20 @@ type LeafletMapProps = {
   center?: LatLngExpression;
   zoom?: number;
   posts?: MapPost[];
+  onMarkerSelect?: (group: {
+    latitude: number;
+    longitude: number;
+    posts: MapPost[];
+    tooltipLines: string[];
+    emojiSummary: string[];
+  }) => void;
 };
 
 export default function LeafletMap({
   center,
   zoom = 13,
   posts = [],
+  onMarkerSelect,
 }: LeafletMapProps) {
   const [userPosition, setUserPosition] = useState<LatLngExpression | null>(
     null
@@ -207,6 +215,11 @@ export default function LeafletMap({
               key={markerKey}
               position={[group.latitude, group.longitude]}
               icon={icon}
+              eventHandlers={{
+                click: () => {
+                  onMarkerSelect?.(group);
+                },
+              }}
             >
               <Tooltip
                 direction="top"

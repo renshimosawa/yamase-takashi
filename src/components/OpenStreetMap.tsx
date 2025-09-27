@@ -13,10 +13,19 @@ export type MapPost = {
   inserted_at?: string | null;
 };
 
+export type MapPostGroup = {
+  latitude: number;
+  longitude: number;
+  posts: MapPost[];
+  tooltipLines: string[];
+  emojiSummary: string[];
+};
+
 type OpenStreetMapProps = {
   center?: LatLngExpression;
   zoom?: number;
   posts?: MapPost[];
+  onMarkerSelect?: (group: MapPostGroup) => void;
 };
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
@@ -25,7 +34,10 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
 
 export default function OpenStreetMap({
   posts = [],
+  onMarkerSelect,
   ...props
 }: OpenStreetMapProps) {
-  return <LeafletMap {...props} posts={posts} />;
+  return (
+    <LeafletMap {...props} posts={posts} onMarkerSelect={onMarkerSelect} />
+  );
 }

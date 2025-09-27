@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 import { fetchHachinoheForecast } from "@/lib/weather";
-import type { MapPost } from "@/components/OpenStreetMap";
+import type { MapPost, MapPostGroup } from "@/components/OpenStreetMap";
 
 const OpenStreetMap = dynamic(() => import("@/components/OpenStreetMap"), {
   ssr: false,
@@ -123,6 +123,7 @@ export default function Home() {
   const [posts, setPosts] = useState<MapPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<MapPostGroup | null>(null);
 
   const fetchPosts = useCallback(async () => {
     setIsLoadingPosts(true);
@@ -157,7 +158,7 @@ export default function Home() {
   return (
     <div className="font-sans relative h-screen w-screen overflow-hidden">
       <div className="absolute inset-0">
-        <OpenStreetMap posts={posts} />
+        <OpenStreetMap posts={posts} onMarkerSelect={setSelectedGroup} />
       </div>
       <aside className="pointer-events-none absolute left-6 top-6 z-[1000] flex flex-col gap-4">
         <WeatherCircle
@@ -186,6 +187,10 @@ export default function Home() {
           error={postError}
         />
       </div>
+      <PostDetailSheet
+        group={selectedGroup}
+        onClose={() => setSelectedGroup(null)}
+      />
     </div>
   );
 }
@@ -392,6 +397,58 @@ function FloatingPostButton({
           />
         </div>
       )}
+    </div>
+  );
+}
+
+type PostDetailSheetProps = {
+  group: MapPostGroup | null;
+  onClose: () => void;
+};
+
+function PostDetailSheet({ group, onClose }: PostDetailSheetProps) {
+  if (!group) return null;
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[1500] flex items-end justify-center px-4 pb-4">
+      <div className="pointer-events-auto w-full max-w-2xl translate-y-0 rounded-t-3xl bg-black/85 p-6 text-white shadow-2xl backdrop-blur">
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+              投稿詳細
+            </p>
+            <p className="text-sm text-white/50">
+              緯度: {group.latitude.toFixed(6)}｜経度:{" "}
+              {group.longitude.toFixed(6)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20"
+          >
+            閉じる
+          </button>
+        </div>
+        <ul className="space-y-3">
+          {group.posts.map((post) => (
+            <li key={post.id} className="rounded-2xl bg-white/10 p-4">
+              <div className="mb-2 flex items-center gap-3 text-sm text-white/80">
+                <span className="text-xl">{post.emoji ?? "📍"}</span>
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
+                  Lv.{post.intensity ?? "-"}
+                </span>
+                {post.inserted_at && (
+                  <span className="text-xs text-white/60">
+                    {new Date(post.inserted_at).toLocaleString("ja-JP")}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-white">{post.description}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
