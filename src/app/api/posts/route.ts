@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getServerAuthSession } from "@/lib/auth";
 type CreatePostRequest = {
-  content: string;
+  description: string;
   latitude?: number | null;
   longitude?: number | null;
+  intensity?: number | null;
+  emoji?: string | null;
 };
 
 export async function POST(request: Request) {
@@ -16,19 +18,41 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreatePostRequest;
-    const { content, latitude, longitude } = body;
+    const { description, latitude, longitude, intensity, emoji } = body;
 
-    if (!content || content.trim().length === 0) {
+    if (!description || description.trim().length === 0) {
       return NextResponse.json(
-        { error: "本文を入力してください" },
+        { error: "自由入力欄を入力してください" },
         { status: 400 }
       );
     }
 
+    if (description.length > 50) {
+      return NextResponse.json(
+        { error: "自由入力欄は50文字以内で入力してください" },
+        { status: 400 }
+      );
+    }
+
+    if (emoji && [...emoji].length !== 1) {
+      return NextResponse.json(
+        { error: "絵文字は1文字で入力してください" },
+        { status: 400 }
+      );
+    }
+
+    const normalizedIntensity =
+      typeof intensity === "number" && !Number.isNaN(intensity)
+        ? Math.min(Math.max(Math.round(intensity), 0), 3)
+        : null;
+
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.from("posts").insert({
       user_id: session.user.id,
-      content,
+      description,
+      content: description,
+      intensity: normalizedIntensity,
+      emoji: emoji ?? null,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
     });
@@ -56,7 +80,9 @@ export async function GET() {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("posts")
-      .select("id, content, latitude, longitude, inserted_at")
+      .select(
+        "id, description, intensity, emoji, latitude, longitude, inserted_at"
+      )
       .order("inserted_at", { ascending: false })
       .limit(200);
 

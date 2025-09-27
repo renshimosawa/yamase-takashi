@@ -41,10 +41,14 @@ Supabase の利用手順:
 2. Supabase SQL Editor で投稿テーブルを作成します。
 
 ```sql
+create extension if not exists "uuid-ossp";
+
 create table if not exists public.posts (
   id uuid default uuid_generate_v4() primary key,
   user_id text not null,
-  content text not null,
+  description text not null,
+  intensity integer,
+  emoji text,
   latitude double precision,
   longitude double precision,
   inserted_at timestamp with time zone default timezone('utc'::text, now())

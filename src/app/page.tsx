@@ -197,23 +197,35 @@ type PostFormProps = {
   onClose: () => void;
 };
 
+type PostFormState = {
+  intensity: number;
+  emoji: string;
+  description: string;
+};
+
+const initialFormState: PostFormState = {
+  intensity: 0,
+  emoji: "",
+  description: "",
+};
+
 function PostForm({ onSubmitted, isLoading, error, onClose }: PostFormProps) {
   const { data: session, status } = useSession();
-  const [content, setContent] = useState("");
+  const [form, setForm] = useState<PostFormState>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated") {
-      setContent("");
+      setForm(initialFormState);
       setMessage(null);
     }
   }, [status]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!content.trim()) {
-      setMessage("投稿内容を入力してください。");
+    if (!form.description.trim()) {
+      setMessage("自由入力欄を入力してください。");
       return;
     }
 
@@ -227,7 +239,9 @@ function PostForm({ onSubmitted, isLoading, error, onClose }: PostFormProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content,
+          description: form.description,
+          intensity: form.intensity,
+          emoji: form.emoji || null,
           latitude: position?.coords.latitude ?? null,
           longitude: position?.coords.longitude ?? null,
         }),
@@ -238,7 +252,7 @@ function PostForm({ onSubmitted, isLoading, error, onClose }: PostFormProps) {
         throw new Error(data.error ?? "投稿に失敗しました。");
       }
 
-      setContent("");
+      setForm(initialFormState);
       setMessage("投稿しました。");
       await onSubmitted();
       onClose();
@@ -263,14 +277,58 @@ function PostForm({ onSubmitted, isLoading, error, onClose }: PostFormProps) {
   return (
     <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
       <label className="text-xs uppercase tracking-[0.2em] text-white/60">
-        投稿フォーム
+        においレベル (0〜3)
+      </label>
+      <input
+        type="range"
+        min={0}
+        max={3}
+        step={1}
+        value={form.intensity}
+        onChange={(event) =>
+          setForm((prev) => ({
+            ...prev,
+            intensity: Number(event.target.value),
+          }))
+        }
+        className="accent-white"
+      />
+      <div className="flex items-center justify-between text-xs text-white/70">
+        <span>0</span>
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+      </div>
+
+      <label className="text-xs uppercase tracking-[0.2em] text-white/60">
+        絵文字 (1文字)
+      </label>
+      <input
+        type="text"
+        value={form.emoji}
+        onChange={(event) => {
+          const value = event.target.value;
+          const chars = [...value];
+          setForm((prev) => ({ ...prev, emoji: chars.slice(0, 1).join("") }));
+        }}
+        placeholder="🙂"
+        className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-base text-white shadow-inner outline-none transition focus:border-white/30 focus:bg-black/20"
+      />
+
+      <label className="text-xs uppercase tracking-[0.2em] text-white/60">
+        自由入力 (50文字以内)
       </label>
       <textarea
-        value={content}
-        onChange={(event) => setContent(event.target.value)}
-        placeholder="100行程度までのテキストを入力"
-        rows={6}
-        className="h-32 w-full resize-none rounded-xl border border-white/10 bg-white/10 p-3 text-sm text-white shadow-inner outline-none transition focus:border-white/30 focus:bg-black/20"
+        value={form.description}
+        onChange={(event) =>
+          setForm((prev) => ({
+            ...prev,
+            description: event.target.value.slice(0, 50),
+          }))
+        }
+        placeholder="周辺の状況を入力"
+        rows={4}
+        className="h-28 w-full resize-none rounded-xl border border-white/10 bg-white/10 p-3 text-sm text-white shadow-inner outline-none transition focus:border-white/30 focus:bg-black/20"
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         {message && <span className="text-xs text-white/80">{message}</span>}
@@ -305,10 +363,10 @@ function FloatingPostButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-semibold text-black shadow-xl transition hover:bg-white/90"
+        className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-base font-semibold text-black shadow-xl transition hover:bg-white/90"
         aria-label="投稿する"
       >
-        ✏️
+        投稿
       </button>
       {isOpen && (
         <div

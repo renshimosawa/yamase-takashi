@@ -15,9 +15,11 @@ import "leaflet/dist/leaflet.css";
 
 type MapPost = {
   id: string;
-  content: string;
+  description: string;
   latitude: number | null;
   longitude: number | null;
+  intensity: number | null;
+  emoji: string | null;
 };
 
 type LeafletMapProps = {
@@ -199,7 +201,13 @@ export default function LeafletMap({
               permanent
               className="!bg-white !text-black !rounded-lg !px-3 !py-2 !text-xs !shadow"
             >
-              {post.content}
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{post.emoji ?? ""}</span>
+                <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs text-black">
+                  {post.intensity !== null ? `Lv.${post.intensity}` : "Lv.-"}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-black/80">{post.description}</p>
             </Tooltip>
           </Marker>
         ))}
@@ -222,8 +230,20 @@ export default function LeafletMap({
               >
                 <ul className="max-h-48 w-48 overflow-auto">
                   {clusterPosts?.map((clusterPost) => (
-                    <li key={clusterPost.id} className="mb-1">
-                      {clusterPost.content}
+                    <li key={clusterPost.id} className="mb-2">
+                      <div className="flex items-center gap-2 text-xs text-black/70">
+                        <span className="text-base">
+                          {clusterPost.emoji ?? ""}
+                        </span>
+                        <span>
+                          {clusterPost.intensity !== null
+                            ? `Lv.${clusterPost.intensity}`
+                            : "Lv.-"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-black/90">
+                        {clusterPost.description}
+                      </p>
                     </li>
                   ))}
                 </ul>

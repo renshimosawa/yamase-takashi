@@ -5,9 +5,11 @@ import type { LatLngExpression } from "leaflet";
 
 export type MapPost = {
   id: string;
-  content: string;
+  description: string;
   latitude: number | null;
   longitude: number | null;
+  intensity: number | null;
+  emoji: string | null;
   inserted_at?: string | null;
 };
 
