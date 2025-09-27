@@ -186,7 +186,7 @@ export default function Home() {
   }, [fetchPosts]);
 
   return (
-    <div className="font-sans relative h-screen w-screen overflow-hidden">
+    <div className="font-sans relative min-h-[100svh] w-screen overflow-hidden">
       <div className="absolute inset-0">
         <OpenStreetMap posts={posts} onMarkerSelect={setSelectedGroup} />
       </div>
