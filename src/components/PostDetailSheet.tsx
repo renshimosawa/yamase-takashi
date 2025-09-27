@@ -14,8 +14,8 @@ export default function PostDetailSheet({
   if (!group) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[1500] flex items-end justify-center px-4 pb-0">
-      <div className="pointer-events-auto w-full max-w-2xl translate-y-0 rounded-t-3xl bg-white p-6 text-slate-900 shadow-2xl">
+    <div className="pointer-events-none fixed inset-0 z-[1500] flex items-end justify-center pb-0">
+      <div className="pointer-events-auto w-full max-w-2xl translate-y-0 rounded-t-3xl bg-white p-6 pb-0 text-slate-900 shadow-2xl">
         <div className="mb-4 flex items-start justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
@@ -65,6 +65,24 @@ export default function PostDetailSheet({
             </li>
           ))}
         </ul>
+        <hr className="my-4 border-slate-200" />
+        <div className="relative mx-auto overflow-hidden rounded-2xl bg-white">
+          <div className="absolute inset-0 z-0 pointer-events-none bg-[url('/wind.png')] bg-[length:200px] bg-[position:center_top_6rem] bg-no-repeat opacity-40" />
+          <div className="relative z-10">
+            <img
+              src="/ad_secTitle.png"
+              alt="ad_secTitle"
+              className="w-[360px]"
+            />
+            <img src="demo_ad.png" alt="" className="w-[360px]" />
+          </div>
+          <img src="ad_secBG.png" alt="" className="relative z-10" />
+          <img
+            src="yamasekun_base.png"
+            alt="ヤマセタカシくん"
+            className="absolute bottom-0 right-[-30px] z-20 w-[200px]"
+          />
+        </div>
       </div>
     </div>
   );
