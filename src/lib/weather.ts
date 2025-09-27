@@ -106,3 +106,45 @@ export async function fetchHachinoheForecast(): Promise<WeatherForecastResponse>
   const data = (await response.json()) as WeatherForecastResponse;
   return data;
 }
+
+type OpenMeteoResponse = {
+  latitude: number;
+  longitude: number;
+  generationtime_ms: number;
+  utc_offset_seconds: number;
+  timezone: string;
+  timezone_abbreviation: string;
+  elevation: number;
+  current?: {
+    time: string;
+    interval: number;
+    temperature_2m?: number;
+  };
+};
+
+export async function fetchCurrentTemperature(
+  latitude: number,
+  longitude: number
+): Promise<number | null> {
+  const url = new URL("https://api.open-meteo.com/v1/forecast");
+  url.searchParams.set("latitude", latitude.toString());
+  url.searchParams.set("longitude", longitude.toString());
+  url.searchParams.set("current", "temperature_2m");
+  url.searchParams.set("timezone", "Asia/Tokyo");
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch current temperature: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const data = (await response.json()) as OpenMeteoResponse;
+  return data.current?.temperature_2m ?? null;
+}
