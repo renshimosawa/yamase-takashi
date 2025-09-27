@@ -46,12 +46,6 @@ body {
   line-height: 1;
 }
 
-.cluster-emoji-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2px;
-}
-
 .post-cluster-icon {
   display: flex;
   align-items: center;
@@ -60,15 +54,20 @@ body {
 }
 
 .cluster-circle {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
+  justify-items: center;
+  width: 56px;
+  height: 56px;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.9);
   color: #111827;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+
+.cluster-circle span {
+  font-size: 16px;
 }

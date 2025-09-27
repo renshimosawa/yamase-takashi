@@ -78,16 +78,16 @@ export default function LeafletMap({
     if (!cache.has(key)) {
       const grid = emojis
         .slice(0, 9)
-        .map((emoji, index) => `<span data-idx="${index}">${emoji}</span>`) // simple span grid
+        .map((emoji) => `<span>${emoji}</span>`)
         .join("");
 
       cache.set(
         key,
         L.divIcon({
           className: "post-cluster-icon",
-          html: `<div class="cluster-circle"><div class="cluster-emoji-grid">${grid}</div></div>`,
-          iconSize: [48, 48],
-          iconAnchor: [24, 24],
+          html: `<div class="cluster-circle">${grid}</div>`,
+          iconSize: [56, 56],
+          iconAnchor: [28, 28],
         })
       );
     }
@@ -119,15 +119,21 @@ export default function LeafletMap({
     [userPosition, center]
   );
 
-  const { singleMarkers, clusterMarkers } = useMemo(() => {
-    const groups = new Map<
-      string,
-      {
-        latitude: number;
-        longitude: number;
-        posts: MapPost[];
-      }
-    >();
+  const groupedMarkers = useMemo(() => {
+    type GroupData = {
+      latitude: number;
+      longitude: number;
+      posts: MapPost[];
+      tooltipLines: string[];
+      emojiSummary: string[];
+    };
+
+    const groups = new Map<string, GroupData>();
+
+    const truncateToPrecision = (value: number, precision: number) => {
+      const multiplier = 10 ** precision;
+      return Math.trunc(value * multiplier) / multiplier;
+    };
 
     for (const post of posts) {
       if (
@@ -137,56 +143,33 @@ export default function LeafletMap({
         continue;
       }
 
-      const key = `${post.latitude.toFixed(4)}:${post.longitude.toFixed(4)}`;
-      const existing = groups.get(key);
+      const latKey = truncateToPrecision(post.latitude, 4);
+      const lngKey = truncateToPrecision(post.longitude, 4);
+      const key = `${latKey}:${lngKey}`;
+      const summary = `${post.emoji ?? fallbackEmoji}｜Lv.${
+        post.intensity ?? "-"
+      }｜${post.description}`;
 
+      const existing = groups.get(key);
       if (existing) {
-        existing.posts?.push(post);
+        existing.posts.push(post);
+        existing.tooltipLines.push(summary);
+        if (existing.emojiSummary.length < 9) {
+          existing.emojiSummary.push(post.emoji ?? fallbackEmoji);
+        }
       } else {
         groups.set(key, {
-          latitude: post.latitude,
-          longitude: post.longitude,
+          latitude: latKey,
+          longitude: lngKey,
           posts: [post],
+          tooltipLines: [summary],
+          emojiSummary: [post.emoji ?? fallbackEmoji],
         });
       }
     }
 
-    const singles: Array<{
-      latitude: number;
-      longitude: number;
-      post: MapPost;
-    }> = [];
-    const clusters: Array<{
-      latitude: number;
-      longitude: number;
-      posts: MapPost[];
-    }> = [];
-
-    groups.forEach((group) => {
-      if (!group.posts) {
-        return;
-      }
-
-      if (group.posts.length === 1) {
-        singles.push({
-          latitude: group.latitude,
-          longitude: group.longitude,
-          post: group.posts[0]!,
-        });
-      } else {
-        clusters.push({
-          latitude: group.latitude,
-          longitude: group.longitude,
-          posts: group.posts,
-        });
-      }
-    });
-
-    return {
-      singleMarkers: singles,
-      clusterMarkers: clusters,
-    };
-  }, [posts]);
+    return Array.from(groups.values());
+  }, [posts, fallbackEmoji]);
 
   return (
     <div className="h-full w-full">
@@ -211,70 +194,39 @@ export default function LeafletMap({
             fillOpacity: 0.6,
           }}
         />
-        {singleMarkers.map(({ latitude, longitude, post }) => {
-          const icon = getEmojiIcon(post.emoji ?? undefined);
-          return (
-            <Marker key={post.id} position={[latitude, longitude]} icon={icon}>
-              <Tooltip
-                direction="top"
-                offset={[0, -32]}
-                opacity={1}
-                permanent
-                className="!bg-white/95 !text-black !rounded-xl !px-4 !py-2 !text-xs !shadow-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{post.emoji ?? fallbackEmoji}</span>
-                  <span className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] text-black">
-                    {post.intensity !== null ? `Lv.${post.intensity}` : "Lv.-"}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-black/80">{post.description}</p>
-              </Tooltip>
-            </Marker>
-          );
-        })}
-        {clusterMarkers.map(({ latitude, longitude, posts: clusterPosts }) => {
-          const count = clusterPosts?.length ?? 0;
-          const emojiList = (clusterPosts ?? []).map(
-            (p) => p.emoji ?? fallbackEmoji
-          );
-          const icon = getClusterIcon(emojiList);
+        {groupedMarkers.map((group, index) => {
+          const icon =
+            group.posts.length > 1
+              ? getClusterIcon(group.emojiSummary)
+              : getEmojiIcon(group.posts[0]?.emoji ?? undefined);
+
+          const markerKey = `${group.latitude}-${group.longitude}-${index}`;
 
           return (
             <Marker
-              key={`${latitude}-${longitude}`}
-              position={[latitude, longitude]}
+              key={markerKey}
+              position={[group.latitude, group.longitude]}
               icon={icon}
             >
               <Tooltip
                 direction="top"
-                offset={[0, -30]}
+                offset={[0, group.posts.length > 1 ? -30 : -32]}
                 opacity={1}
                 permanent
                 className="!bg-white/95 !text-black !rounded-xl !px-4 !py-2 !text-xs !shadow-lg"
               >
-                <p className="mb-2 text-xs font-semibold text-black/60">
-                  {count} 件の投稿
-                </p>
-                <ul className="max-h-48 w-48 space-y-2 overflow-auto">
-                  {clusterPosts?.map((clusterPost) => (
+                {group.posts.length > 1 && (
+                  <p className="mb-2 text-xs font-semibold text-black/60">
+                    {group.posts.length} 件の投稿
+                  </p>
+                )}
+                <ul className="space-y-2">
+                  {group.tooltipLines.map((line, lineIndex) => (
                     <li
-                      key={clusterPost.id}
-                      className="rounded-lg bg-white/70 p-2"
+                      key={`${markerKey}-line-${lineIndex}`}
+                      className="rounded-lg bg-white/70 p-2 text-sm text-black/90"
                     >
-                      <div className="mb-1 flex items-center gap-2 text-xs text-black/70">
-                        <span className="text-lg">
-                          {clusterPost.emoji ?? fallbackEmoji}
-                        </span>
-                        <span className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] text-black">
-                          {clusterPost.intensity !== null
-                            ? `Lv.${clusterPost.intensity}`
-                            : "Lv.-"}
-                        </span>
-                      </div>
-                      <p className="text-sm text-black/90">
-                        {clusterPost.description}
-                      </p>
+                      {line}
                     </li>
                   ))}
                 </ul>
