@@ -107,15 +107,14 @@ export default function Home() {
       <div className="absolute inset-0">
         <OpenStreetMap />
       </div>
-      <header className="pointer-events-none absolute left-1/2 top-8 z-[1000] w-full max-w-3xl -translate-x-1/2 rounded-lg bg-black/40 p-6 text-white shadow-lg backdrop-blur">
-        <h1 className="text-3xl font-bold">やませ たかし</h1>
-        <p className="mt-2 text-base">
-          OpenStreetMap で現在地を可視化しています。
-        </p>
-        <p className="mt-4 text-sm font-medium" aria-live="polite">
+      <nav className="absolute left-1/2 bottom-6 z-[1000] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 rounded-2xl bg-black/60 text-white shadow-lg backdrop-blur">
+        <div
+          className="border-t border-white/10 px-6 py-4 text-sm"
+          aria-live="polite"
+        >
           {headline}
-        </p>
-      </header>
+        </div>
+      </nav>
     </div>
   );
 }
