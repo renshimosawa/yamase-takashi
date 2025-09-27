@@ -19,6 +19,25 @@ type TodayForecast = {
 const formatTemperature = (value: string | null) =>
   value !== null && value !== "" ? `${value}℃` : "--";
 
+const getWindDirectionArrow = (wind: string | null) => {
+  if (!wind) return "";
+
+  const directionOrder = [
+    { keyword: "北東", arrow: "↙️" },
+    { keyword: "南東", arrow: "↖️" },
+    { keyword: "北西", arrow: "↘️" },
+    { keyword: "南西", arrow: "↗️" },
+    { keyword: "北", arrow: "⬇️" },
+    { keyword: "南", arrow: "⬆️" },
+    { keyword: "東", arrow: "⬅️" },
+    { keyword: "西", arrow: "➡️" },
+  ];
+
+  const matched = directionOrder.find(({ keyword }) => wind.includes(keyword));
+
+  return matched?.arrow ?? "🧭";
+};
+
 export default function Home() {
   const [forecast, setForecast] = useState<TodayForecast | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,8 +95,11 @@ export default function Home() {
       `最高 ${formatTemperature(maxTemperature)}`,
       `最低 ${formatTemperature(minTemperature)}`,
     ].join(" / ");
+    const windArrow = getWindDirectionArrow(wind);
 
-    return `今日の天気: ${weather}｜気温: ${temperatures}｜風向き: ${wind}`;
+    return `今日の天気: ${weather}｜気温: ${temperatures}｜風向き: ${wind}${
+      windArrow ? ` ${windArrow}` : ""
+    }`;
   }, [error, forecast, isLoading]);
 
   return (
