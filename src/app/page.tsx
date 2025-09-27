@@ -1,10 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 import { fetchHachinoheForecast } from "@/lib/weather";
+import type { MapPost } from "@/components/OpenStreetMap";
 
 const OpenStreetMap = dynamic(() => import("@/components/OpenStreetMap"), {
   ssr: false,
@@ -104,10 +105,44 @@ export default function Home() {
     }`;
   }, [error, forecast, isLoading]);
 
+  const [posts, setPosts] = useState<MapPost[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
+
+  const fetchPosts = useCallback(async () => {
+    setIsLoadingPosts(true);
+    setPostError(null);
+    try {
+      const response = await fetch("/api/posts", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const data = (await response.json()) as { error?: string };
+        throw new Error(data.error ?? "投稿の取得に失敗しました。");
+      }
+
+      const data = (await response.json()) as { posts: MapPost[] };
+      setPosts(data.posts ?? []);
+    } catch (error) {
+      console.error("Failed to fetch posts", error);
+      setPostError(
+        error instanceof Error ? error.message : "投稿の取得に失敗しました。"
+      );
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchPosts();
+  }, [fetchPosts]);
+
   return (
     <div className="font-sans relative h-screen w-screen overflow-hidden">
       <div className="absolute inset-0">
-        <OpenStreetMap />
+        <OpenStreetMap posts={posts} />
       </div>
       <nav className="absolute left-1/2 bottom-6 z-[1000] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 rounded-2xl bg-black/60 text-white shadow-lg backdrop-blur">
         <div
@@ -118,14 +153,24 @@ export default function Home() {
             <span className="text-base font-semibold">{headline}</span>
             <UserActions session={session} status={status} />
           </div>
-          <PostForm />
+          <PostForm
+            onSubmitted={fetchPosts}
+            isLoading={isLoadingPosts}
+            error={postError}
+          />
         </div>
       </nav>
     </div>
   );
 }
 
-function PostForm() {
+type PostFormProps = {
+  onSubmitted: () => Promise<void> | void;
+  isLoading: boolean;
+  error: string | null;
+};
+
+function PostForm({ onSubmitted, isLoading, error }: PostFormProps) {
   const { data: session, status } = useSession();
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -168,6 +213,7 @@ function PostForm() {
 
       setContent("");
       setMessage("投稿しました。");
+      await onSubmitted();
     } catch (error) {
       console.error("Failed to submit post", error);
       setMessage(
@@ -200,12 +246,13 @@ function PostForm() {
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         {message && <span className="text-xs text-white/80">{message}</span>}
+        {error && <span className="text-xs text-red-300">{error}</span>}
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isLoading}
           className="ml-auto rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "送信中..." : "投稿する"}
+          {isSubmitting || isLoading ? "送信中..." : "投稿する"}
         </button>
       </div>
     </form>

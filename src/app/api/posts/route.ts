@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getServerAuthSession } from "@/lib/auth";
-
 type CreatePostRequest = {
   content: string;
   latitude?: number | null;
@@ -45,6 +44,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
     console.error("Unexpected error on POST /api/posts", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id, content, latitude, longitude, inserted_at")
+      .order("inserted_at", { ascending: false })
+      .limit(200);
+
+    if (error) {
+      console.error("Failed to fetch posts", error);
+      return NextResponse.json(
+        { error: "投稿の取得中にエラーが発生しました" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ posts: data }, { status: 200 });
+  } catch (error) {
+    console.error("Unexpected error on GET /api/posts", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

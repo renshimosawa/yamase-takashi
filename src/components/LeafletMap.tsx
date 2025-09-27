@@ -1,19 +1,49 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CircleMarker, MapContainer, TileLayer, useMap } from "react-leaflet";
+import {
+  CircleMarker,
+  MapContainer,
+  Marker,
+  TileLayer,
+  Tooltip,
+  useMap,
+} from "react-leaflet";
+import L from "leaflet";
 import type { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 type LeafletMapProps = {
   center?: LatLngExpression;
   zoom?: number;
+  posts?: Array<{
+    id: string;
+    content: string;
+    latitude: number | null;
+    longitude: number | null;
+  }>;
 };
 
-export default function LeafletMap({ center, zoom = 13 }: LeafletMapProps) {
+export default function LeafletMap({
+  center,
+  zoom = 13,
+  posts = [],
+}: LeafletMapProps) {
   const [userPosition, setUserPosition] = useState<LatLngExpression | null>(
     null
   );
+  const postIcon = useMemo(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    return L.divIcon({
+      className: "post-marker-icon",
+      html: '<span class="marker-emoji">📝</span>',
+      iconSize: [32, 32],
+      iconAnchor: [16, 28],
+    });
+  }, []);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -61,6 +91,29 @@ export default function LeafletMap({ center, zoom = 13 }: LeafletMapProps) {
             fillOpacity: 0.6,
           }}
         />
+        {posts
+          .filter(
+            (post) =>
+              typeof post.latitude === "number" &&
+              typeof post.longitude === "number"
+          )
+          .map((post) => (
+            <Marker
+              key={post.id}
+              position={[post.latitude!, post.longitude!]}
+              icon={postIcon}
+            >
+              <Tooltip
+                direction="top"
+                offset={[0, -10]}
+                opacity={1}
+                permanent
+                className="!bg-white !text-black !rounded-lg !px-3 !py-2 !text-xs !shadow"
+              >
+                {post.content}
+              </Tooltip>
+            </Marker>
+          ))}
       </MapContainer>
     </div>
   );

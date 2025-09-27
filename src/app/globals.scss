@@ -28,3 +28,15 @@ body {
     cursor: pointer;
   }
 }
+
+.post-marker-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.marker-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
