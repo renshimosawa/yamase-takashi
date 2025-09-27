@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+このプロジェクトは [Next.js](https://nextjs.org) を用いて構築されています。
 
-## Getting Started
-
-First, run the development server:
+## 開発環境の起動
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開くとアプリが表示されます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Google ログイン（NextAuth）設定
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Google 認証を利用するには、以下の環境変数を `.env.local` に設定してください。
 
-## Learn More
+```
+GOOGLE_CLIENT_ID="Google Cloud Console で発行したクライアントID"
+GOOGLE_CLIENT_SECRET="Google Cloud Console で発行したクライアントシークレット"
+NEXTAUTH_SECRET="十分に長いランダム文字列"
+NEXTAUTH_URL="http://localhost:3000"
+```
 
-To learn more about Next.js, take a look at the following resources:
+1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) で OAuth 2.0 クライアント ID を作成します。
+   - 認証情報 > 認証情報を作成 > OAuth クライアント ID を選択
+   - アプリケーションの種類: ウェブアプリケーション
+   - 承認済みのリダイレクト URI に `http://localhost:3000/api/auth/callback/google` を追加
+2. 発行されたクライアント ID / シークレットを `.env.local` に設定します。
+3. `NEXTAUTH_SECRET` は `openssl rand -base64 32` などで生成してください。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+環境変数を設定した後、開発サーバーを再起動すると、画面下部のバーから Google ログインを行えます。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 技術スタック
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 15 App Router
+- TypeScript / React 19
+- NextAuth.js (Google OAuth)
+- Leaflet + React Leaflet
