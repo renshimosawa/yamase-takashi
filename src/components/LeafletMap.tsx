@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CircleMarker,
   MapContainer,
@@ -13,15 +13,17 @@ import L from "leaflet";
 import type { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+type MapPost = {
+  id: string;
+  content: string;
+  latitude: number | null;
+  longitude: number | null;
+};
+
 type LeafletMapProps = {
   center?: LatLngExpression;
   zoom?: number;
-  posts?: Array<{
-    id: string;
-    content: string;
-    latitude: number | null;
-    longitude: number | null;
-  }>;
+  posts?: MapPost[];
 };
 
 export default function LeafletMap({
@@ -43,6 +45,29 @@ export default function LeafletMap({
       iconSize: [32, 32],
       iconAnchor: [16, 28],
     });
+  }, []);
+
+  const clusterIconCache = useRef(new Map<number, L.DivIcon>());
+
+  const getClusterIcon = useCallback((count: number) => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const cache = clusterIconCache.current;
+    if (!cache.has(count)) {
+      cache.set(
+        count,
+        L.divIcon({
+          className: "post-cluster-icon",
+          html: `<span class="cluster-circle">${count}</span>`,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        })
+      );
+    }
+
+    return cache.get(count);
   }, []);
 
   useEffect(() => {
@@ -69,6 +94,75 @@ export default function LeafletMap({
     [userPosition, center]
   );
 
+  const { singleMarkers, clusterMarkers } = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        latitude: number;
+        longitude: number;
+        posts: MapPost[];
+      }
+    >();
+
+    for (const post of posts) {
+      if (
+        typeof post.latitude !== "number" ||
+        typeof post.longitude !== "number"
+      ) {
+        continue;
+      }
+
+      const key = `${post.latitude.toFixed(4)}:${post.longitude.toFixed(4)}`;
+      const existing = groups.get(key);
+
+      if (existing) {
+        existing.posts?.push(post);
+      } else {
+        groups.set(key, {
+          latitude: post.latitude,
+          longitude: post.longitude,
+          posts: [post],
+        });
+      }
+    }
+
+    const singles: Array<{
+      latitude: number;
+      longitude: number;
+      post: MapPost;
+    }> = [];
+    const clusters: Array<{
+      latitude: number;
+      longitude: number;
+      posts: MapPost[];
+    }> = [];
+
+    groups.forEach((group) => {
+      if (!group.posts) {
+        return;
+      }
+
+      if (group.posts.length === 1) {
+        singles.push({
+          latitude: group.latitude,
+          longitude: group.longitude,
+          post: group.posts[0]!,
+        });
+      } else {
+        clusters.push({
+          latitude: group.latitude,
+          longitude: group.longitude,
+          posts: group.posts,
+        });
+      }
+    });
+
+    return {
+      singleMarkers: singles,
+      clusterMarkers: clusters,
+    };
+  }, [posts]);
+
   return (
     <div className="h-full w-full">
       <MapContainer
@@ -91,17 +185,32 @@ export default function LeafletMap({
             fillOpacity: 0.6,
           }}
         />
-        {posts
-          .filter(
-            (post) =>
-              typeof post.latitude === "number" &&
-              typeof post.longitude === "number"
-          )
-          .map((post) => (
+        {singleMarkers.map(({ latitude, longitude, post }) => (
+          <Marker
+            key={post.id}
+            position={[latitude, longitude]}
+            icon={postIcon}
+          >
+            <Tooltip
+              direction="top"
+              offset={[0, -10]}
+              opacity={1}
+              permanent
+              className="!bg-white !text-black !rounded-lg !px-3 !py-2 !text-xs !shadow"
+            >
+              {post.content}
+            </Tooltip>
+          </Marker>
+        ))}
+        {clusterMarkers.map(({ latitude, longitude, posts: clusterPosts }) => {
+          const count = clusterPosts?.length ?? 0;
+          const icon = getClusterIcon(count);
+
+          return (
             <Marker
-              key={post.id}
-              position={[post.latitude!, post.longitude!]}
-              icon={postIcon}
+              key={`${latitude}-${longitude}`}
+              position={[latitude, longitude]}
+              icon={icon}
             >
               <Tooltip
                 direction="top"
@@ -110,10 +219,17 @@ export default function LeafletMap({
                 permanent
                 className="!bg-white !text-black !rounded-lg !px-3 !py-2 !text-xs !shadow"
               >
-                {post.content}
+                <ul className="max-h-48 w-48 overflow-auto">
+                  {clusterPosts?.map((clusterPost) => (
+                    <li key={clusterPost.id} className="mb-1">
+                      {clusterPost.content}
+                    </li>
+                  ))}
+                </ul>
               </Tooltip>
             </Marker>
-          ))}
+          );
+        })}
       </MapContainer>
     </div>
   );
