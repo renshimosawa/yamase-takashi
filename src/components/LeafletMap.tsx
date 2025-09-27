@@ -209,6 +209,7 @@ export default function LeafletMap({
               : getEmojiIcon(group.posts[0]?.emoji ?? undefined);
 
           const markerKey = `${group.latitude}-${group.longitude}-${index}`;
+          const handleSelect = () => onMarkerSelect?.(group);
 
           return (
             <Marker
@@ -222,27 +223,42 @@ export default function LeafletMap({
               }}
             >
               <Tooltip
+                interactive
+                eventHandlers={{ click: handleSelect }}
                 direction="top"
                 offset={[0, group.posts.length > 1 ? -30 : -32]}
                 opacity={1}
                 permanent
-                className="!bg-white/95 !text-black !rounded-xl !px-4 !py-2 !text-xs !shadow-lg"
+                className="!pointer-events-auto !cursor-pointer !bg-white/95 !text-black !rounded-xl !px-4 !py-2 !text-xs !shadow-lg"
               >
-                {group.posts.length > 1 && (
-                  <p className="mb-2 text-xs font-semibold text-black/60">
-                    {group.posts.length} 件の投稿
-                  </p>
-                )}
-                <ul className="space-y-2">
-                  {group.tooltipLines.map((line, lineIndex) => (
-                    <li
-                      key={`${markerKey}-line-${lineIndex}`}
-                      className="rounded-lg bg-white/70 p-2 text-sm text-black/90"
-                    >
-                      {line}
-                    </li>
-                  ))}
-                </ul>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={handleSelect}
+                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onMarkerSelect?.(group);
+                    }
+                  }}
+                  className="space-y-2"
+                >
+                  {group.posts.length > 1 && (
+                    <p className="text-xs font-semibold text-black/60">
+                      {group.posts.length} 件の投稿
+                    </p>
+                  )}
+                  <ul className="space-y-2">
+                    {group.tooltipLines.map((line, lineIndex) => (
+                      <li
+                        key={`${markerKey}-line-${lineIndex}`}
+                        className="rounded-lg bg-white/70 p-2 text-sm text-black/90"
+                      >
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </Tooltip>
             </Marker>
           );
