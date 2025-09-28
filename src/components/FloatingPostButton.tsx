@@ -21,25 +21,33 @@ export default function FloatingPostButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1 px-3 py-2 justify-center rounded-full bg-white text-base font-semibold text-black shadow-xl transition hover:bg-white/90"
+        className="group relative flex items-center gap-2 px-5 py-3 justify-center rounded-full bg-gradient-to-r from-[#FF8A00] via-[#FF5E62] to-[#FF2D55] text-base font-semibold text-white shadow-[0_10px_30px_rgba(255,94,98,0.45)] transition hover:shadow-[0_12px_40px_rgba(255,94,98,0.55)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#FF5E62]/50"
         aria-label="投稿する"
       >
-        <svg
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+        <span
+          className="absolute inset-0 rounded-full bg-white/20 opacity-0 transition group-hover:opacity-100"
           aria-hidden="true"
-        >
-          <path
-            d="M10 4v12m6-6H4"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        ヤマセ君報告
+        />
+        <span className="relative flex items-center gap-2">
+          <svg
+            className="h-5 w-5 drop-shadow-[0_3px_6px_rgba(0,0,0,0.25)]"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M10 4v12m6-6H4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="drop-shadow-[0_3px_6px_rgba(0,0,0,0.25)]">
+            ヤマセ君報告
+          </span>
+        </span>
       </button>
       {isOpen && (
         <div
