@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "やませくん",
+  title: "ヤマセ君の知らせ",
   description: "",
   icons: {
     icon: "/favicon.png",

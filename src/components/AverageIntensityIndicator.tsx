@@ -49,11 +49,7 @@ export default function AverageIntensityIndicator({
   }, [fetchAverageIntensity, refreshToken]);
 
   const intensityImageSrc = useMemo(() => {
-    if (averageIntensity === null) {
-      return "/yamasekun/yamase_00.png";
-    }
-
-    if (averageIntensity < 1) {
+    if (averageIntensity === null || averageIntensity < 1) {
       return "/yamasekun/yamase_00.png";
     }
 

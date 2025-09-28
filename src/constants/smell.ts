@@ -9,6 +9,10 @@ export const SMELL_TYPE_ORDER = [
 
 export type SmellType = (typeof SMELL_TYPE_ORDER)[number];
 
+export const NEUTRAL_SMELL_KEY = "_neutral" as const;
+export const NEUTRAL_SMELL_EMOJI = "😊";
+export type SmellSummaryValue = SmellType | typeof NEUTRAL_SMELL_KEY;
+
 export const SMELL_TYPE_LABELS: Record<SmellType, string> = {
   hoya: "ホヤ",
   iron: "鉄",

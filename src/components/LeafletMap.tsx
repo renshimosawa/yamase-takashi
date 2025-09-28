@@ -17,6 +17,9 @@ import {
   getSmellIconPath,
   isValidSmellType,
   SMELL_TYPE_LABELS,
+  NEUTRAL_SMELL_EMOJI,
+  NEUTRAL_SMELL_KEY,
+  type SmellSummaryValue,
   type SmellType,
 } from "@/constants/smell";
 import type { MapPostGroup } from "./OpenStreetMap";
@@ -76,47 +79,57 @@ export default function LeafletMap({
 
   const clusterIconCache = useRef(new Map<string, L.DivIcon>());
 
-  const getClusterIcon = useCallback((smellTypes: SmellType[]) => {
-    if (typeof window === "undefined") {
-      return undefined;
-    }
+  const getClusterIcon = useCallback(
+    (smellTypes: SmellSummaryValue[], hasNeutral: boolean) => {
+      if (typeof window === "undefined") {
+        return undefined;
+      }
 
-    const uniqueTypes = Array.from(new Set(smellTypes));
-    if (uniqueTypes.length === 0) {
-      return undefined;
-    }
+      const uniqueTypes = Array.from(new Set(smellTypes));
+      if (hasNeutral) {
+        uniqueTypes.unshift(NEUTRAL_SMELL_KEY);
+      }
 
-    const cache = clusterIconCache.current;
-    const key = uniqueTypes.join("|") || "_empty";
-    if (!cache.has(key)) {
-      const maxItems = 4;
-      const sliced = uniqueTypes.slice(0, maxItems);
-      const baseSize = 28;
-      const gap = 6;
-      const itemCount = sliced.length;
-      const width = itemCount * baseSize + Math.max(0, itemCount - 1) * gap;
-      const height = baseSize;
+      if (uniqueTypes.length === 0) {
+        return undefined;
+      }
 
-      const grid = sliced
-        .map((type) => {
-          const icon = getSmellIconPath(type);
-          return `<span class="stacked-smell-icons__item"><img src="${icon}" alt="${SMELL_TYPE_LABELS[type]}" /></span>`;
-        })
-        .join("");
+      const cache = clusterIconCache.current;
+      const key = uniqueTypes.join("|") || "_empty";
+      if (!cache.has(key)) {
+        const maxItems = 4;
+        const sliced = uniqueTypes.slice(0, maxItems);
+        const baseSize = 28;
+        const gap = 6;
+        const itemCount = sliced.length;
+        const width = itemCount * baseSize + Math.max(0, itemCount - 1) * gap;
+        const height = baseSize;
 
-      cache.set(
-        key,
-        L.divIcon({
-          className: "post-cluster-icon",
-          html: `<div class="stacked-smell-icons">${grid}</div>`,
-          iconSize: [width, height],
-          iconAnchor: [width / 2, height],
-        })
-      );
-    }
+        const grid = sliced
+          .map((type) => {
+            if (type === NEUTRAL_SMELL_KEY) {
+              return `<span class="stacked-smell-icons__item stacked-smell-icons__item--neutral">${NEUTRAL_SMELL_EMOJI}</span>`;
+            }
+            const icon = getSmellIconPath(type);
+            return `<span class="stacked-smell-icons__item"><img src="${icon}" alt="${SMELL_TYPE_LABELS[type]}" /></span>`;
+          })
+          .join("");
 
-    return cache.get(key);
-  }, []);
+        cache.set(
+          key,
+          L.divIcon({
+            className: "post-cluster-icon",
+            html: `<div class="stacked-smell-icons">${grid}</div>`,
+            iconSize: [width, height],
+            iconAnchor: [width / 2, height],
+          })
+        );
+      }
+
+      return cache.get(key);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -148,7 +161,7 @@ export default function LeafletMap({
       longitude: number;
       posts: MapPost[];
       tooltipLines: string[];
-      smellSummary: SmellType[];
+      smellSummary: SmellSummaryValue[];
     };
 
     const groups = new Map<string, GroupData>();
@@ -175,7 +188,11 @@ export default function LeafletMap({
       if (existing) {
         existing.posts.push(post);
         existing.tooltipLines.push(summary);
-        if (
+        if (post.intensity === 0) {
+          if (!existing.smellSummary.includes(NEUTRAL_SMELL_KEY)) {
+            existing.smellSummary.push(NEUTRAL_SMELL_KEY);
+          }
+        } else if (
           post.smell_type &&
           !existing.smellSummary.includes(post.smell_type)
         ) {
@@ -187,7 +204,12 @@ export default function LeafletMap({
           longitude: lngKey,
           posts: [post],
           tooltipLines: [summary],
-          smellSummary: post.smell_type ? [post.smell_type] : [],
+          smellSummary:
+            post.intensity === 0
+              ? [NEUTRAL_SMELL_KEY]
+              : post.smell_type
+              ? [post.smell_type]
+              : [],
         });
       }
     }
@@ -219,10 +241,27 @@ export default function LeafletMap({
           }}
         />
         {groupedMarkers.map((group, index) => {
-          const icon =
+          const hasNeutral = group.smellSummary.includes(NEUTRAL_SMELL_KEY);
+          const iconOption =
             group.posts.length > 1 && group.smellSummary.length > 0
-              ? getClusterIcon(group.smellSummary)
+              ? getClusterIcon(group.smellSummary, hasNeutral)
+              : group.posts[0]?.intensity === 0
+              ? L.divIcon({
+                  className: "post-marker-icon",
+                  html: `<div class="marker-emoji-pin">${NEUTRAL_SMELL_EMOJI}</div>`,
+                  iconSize: [32, 32],
+                  iconAnchor: [16, 32],
+                })
               : getSmellIcon(group.posts[0]?.smell_type ?? undefined);
+
+          const icon =
+            iconOption ??
+            L.divIcon({
+              className: "post-marker-icon",
+              html: `<div class="marker-emoji-pin">${NEUTRAL_SMELL_EMOJI}</div>`,
+              iconSize: [32, 32],
+              iconAnchor: [16, 32],
+            });
 
           const markerKey = `${group.latitude}-${group.longitude}-${index}`;
           const handleSelect = () => onMarkerSelect?.(group);

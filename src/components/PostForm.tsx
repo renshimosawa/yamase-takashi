@@ -14,13 +14,13 @@ export type PostFormProps = {
 
 export type PostFormState = {
   intensity: number;
-  smellType: SmellType;
+  smellType: SmellType | null;
   description: string;
 };
 
 const initialFormState: PostFormState = {
   intensity: 0,
-  smellType: "hoya",
+  smellType: null,
   description: "",
 };
 
@@ -68,6 +68,11 @@ export default function PostForm({
       return;
     }
 
+    if (form.intensity > 0 && !form.smellType) {
+      setMessage("においタイプを選択してください。");
+      return;
+    }
+
     setIsSubmitting(true);
     setMessage(null);
 
@@ -80,7 +85,7 @@ export default function PostForm({
         body: JSON.stringify({
           description: trimmedDescription,
           intensity: form.intensity,
-          smell_type: form.smellType,
+          smell_type: form.intensity === 0 ? null : form.smellType,
           latitude: position?.coords.latitude ?? null,
           longitude: position?.coords.longitude ?? null,
         }),
@@ -123,10 +128,14 @@ export default function PostForm({
         step={1}
         value={form.intensity}
         onChange={(event) =>
-          setForm((prev) => ({
-            ...prev,
-            intensity: Number(event.target.value),
-          }))
+          setForm((prev) => {
+            const nextIntensity = Number(event.target.value);
+            return {
+              ...prev,
+              intensity: nextIntensity,
+              smellType: nextIntensity === 0 ? null : prev.smellType,
+            };
+          })
         }
         className="accent-white"
       />
@@ -143,15 +152,21 @@ export default function PostForm({
       <div className="grid grid-cols-2 gap-2 text-sm">
         {SMELL_TYPE_OPTIONS.map((option) => {
           const isSelected = form.smellType === option.value;
+          const isDisabled = form.intensity === 0;
           return (
             <button
               key={option.value}
               type="button"
-              onClick={() =>
-                setForm((prev) => ({ ...prev, smellType: option.value }))
-              }
-              className={`flex items-center gap-2 rounded-xl border bg-white/10 px-3 py-2 text-left transition ${
-                isSelected
+              onClick={() => {
+                if (!isDisabled) {
+                  setForm((prev) => ({ ...prev, smellType: option.value }));
+                }
+              }}
+              disabled={isDisabled}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition ${
+                isDisabled
+                  ? "cursor-not-allowed border-white/5 bg-white/5 text-white/40"
+                  : isSelected
                   ? "border-white/80 bg-white/20 text-white"
                   : "border-white/10 text-white/80 hover:border-white/30 hover:bg-white/15"
               }`}
@@ -159,7 +174,9 @@ export default function PostForm({
               <img
                 src={option.icon}
                 alt={option.label}
-                className="h-8 w-8 flex-shrink-0 rounded-full border border-white/20 bg-black/20 object-contain p-1"
+                className={`h-8 w-8 flex-shrink-0 rounded-full border border-white/20 bg-black/20 object-contain p-1 ${
+                  isDisabled ? "opacity-40" : ""
+                }`}
               />
               <span className="text-sm font-medium">{option.label}</span>
             </button>

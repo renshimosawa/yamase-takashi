@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import type { LatLngExpression } from "leaflet";
 
-import type { SmellType } from "@/constants/smell";
+import type { SmellType, SmellSummaryValue } from "@/constants/smell";
 
 export type MapPost = {
   id: string;
@@ -20,7 +20,7 @@ export type MapPostGroup = {
   longitude: number;
   posts: MapPost[];
   tooltipLines: string[];
-  smellSummary: SmellType[];
+  smellSummary: SmellSummaryValue[];
 };
 
 type OpenStreetMapProps = {

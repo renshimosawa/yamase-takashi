@@ -5,7 +5,7 @@ import { getServerAuthSession } from "@/lib/auth";
 import { isValidSmellType, type SmellType } from "@/constants/smell";
 type CreatePostRequest = {
   description: string;
-  smell_type: SmellType;
+  smell_type: SmellType | null;
   latitude?: number | null;
   longitude?: number | null;
   intensity?: number | null;
@@ -35,17 +35,28 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!isValidSmellType(smell_type)) {
+    const normalizedIntensity =
+      typeof intensity === "number" && !Number.isNaN(intensity)
+        ? Math.min(Math.max(Math.round(intensity), 0), 3)
+        : null;
+
+    if (smell_type !== null && !isValidSmellType(smell_type)) {
       return NextResponse.json(
         { error: "においタイプが不正です" },
         { status: 400 }
       );
     }
 
-    const normalizedIntensity =
-      typeof intensity === "number" && !Number.isNaN(intensity)
-        ? Math.min(Math.max(Math.round(intensity), 0), 3)
-        : null;
+    if (normalizedIntensity !== null && normalizedIntensity > 0) {
+      if (!smell_type) {
+        return NextResponse.json(
+          { error: "においタイプを選択してください" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const storedSmellType = normalizedIntensity === 0 ? null : smell_type;
 
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.from("posts").insert({
@@ -53,7 +64,7 @@ export async function POST(request: Request) {
       description,
       content: description,
       intensity: normalizedIntensity,
-      smell_type,
+      smell_type: storedSmellType,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
     });
