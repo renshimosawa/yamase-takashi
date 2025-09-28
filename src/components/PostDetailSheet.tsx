@@ -92,9 +92,9 @@ export default function PostDetailSheet({
             <img
               src="/ad_secTitle.png"
               alt="ad_secTitle"
-              className="w-[360px]"
+              className="w-[360px] mx-auto"
             />
-            <img src="demo_ad.png" alt="" className="w-[360px]" />
+            <img src="demo_ad.png" alt="" className="w-[360px] mx-auto" />
           </div>
           <img src="ad_secBG.png" alt="" className="relative z-10" />
           <img
