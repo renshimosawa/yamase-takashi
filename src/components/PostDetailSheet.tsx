@@ -82,7 +82,7 @@ export default function PostDetailSheet({
         </ul>
         <hr className="my-4 border-slate-200" />
         <div className="relative mx-auto overflow-hidden rounded-2xl bg-white">
-          <div className="absolute inset-0 z-0 pointer-events-none bg-[url('/wind.png')] bg-[length:200px] bg-[position:center_top_6rem] bg-no-repeat opacity-40" />
+          <div className="absolute inset-0 z-0 pointer-events-none bg-[url('/wind.png')] bg-[length:170px] bg-[position:center_top_6rem] bg-no-repeat opacity-40" />
           <div className="relative z-10">
             <img
               src="/ad_secTitle.png"
@@ -95,7 +95,7 @@ export default function PostDetailSheet({
           <img
             src="yamasekun_base.png"
             alt="ヤマセタカシくん"
-            className="absolute bottom-0 right-[-30px] z-20 w-[200px]"
+            className="absolute bottom-0 right-[-30px] z-20 w-[160px]"
           />
         </div>
       </div>

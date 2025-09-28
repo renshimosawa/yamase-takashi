@@ -85,7 +85,7 @@ export default function AverageIntensityIndicator({
   }, [averageIntensity, error, isLoading]);
 
   const containerClassName = [
-    "pointer-events-none flex flex-col items-end gap-2 text-right text-white",
+    "pointer-events-none flex flex-col items-center gap-2 text-right text-white",
     className,
   ]
     .filter(Boolean)

@@ -221,7 +221,7 @@ export default function Home() {
       </div>
       <AverageIntensityIndicator
         refreshToken={indicatorRefreshToken}
-        className="absolute bottom-4 right-4 z-[1000]"
+        className="absolute bottom-4 right-0 z-[1000]"
       />
       <PostDetailSheet
         group={selectedGroup}
