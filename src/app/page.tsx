@@ -10,6 +10,7 @@ import FloatingPostButton from "@/components/FloatingPostButton";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import WeatherCircle from "@/components/WeatherCircle";
 import type { MapPost, MapPostGroup } from "@/components/OpenStreetMap";
+import AverageIntensityIndicator from "@/components/AverageIntensityIndicator";
 
 const OpenStreetMap = dynamic(() => import("@/components/OpenStreetMap"), {
   ssr: false,
@@ -155,6 +156,7 @@ export default function Home() {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<MapPostGroup | null>(null);
+  const [indicatorRefreshToken, setIndicatorRefreshToken] = useState(0);
 
   const fetchPosts = useCallback(async () => {
     setIsLoadingPosts(true);
@@ -172,6 +174,7 @@ export default function Home() {
 
       const data = (await response.json()) as { posts: MapPost[] };
       setPosts(data.posts ?? []);
+      setIndicatorRefreshToken((prev) => prev + 1);
     } catch (error) {
       console.error("Failed to fetch posts", error);
       setPostError(
@@ -209,13 +212,17 @@ export default function Home() {
           tooltip={forecast?.wind ?? weatherCard.tooltip}
         />
       </aside>
-      <div className="w-full pointer-events-auto absolute bottom-8 left-0 z-[1000] px-4">
+      <div className="w-full pointer-events-auto absolute bottom-8 left-0 z-[1100] px-4">
         <FloatingPostButton
           onSubmitted={fetchPosts}
           isLoading={isLoadingPosts}
           error={postError}
         />
       </div>
+      <AverageIntensityIndicator
+        refreshToken={indicatorRefreshToken}
+        className="absolute bottom-4 right-4 z-[1000]"
+      />
       <PostDetailSheet
         group={selectedGroup}
         onClose={() => setSelectedGroup(null)}

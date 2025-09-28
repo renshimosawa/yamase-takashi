@@ -44,6 +44,7 @@ export default function FloatingPostButton({
       {isOpen && (
         <div
           className="absolute bottom-15 left-0 w-full max-w-[500px] rounded-2xl bg-black/80 p-6 text-white shadow-2xl backdrop-blur"
+          style={{ zIndex: 1200 }}
           role="dialog"
         >
           <div className="mb-4 flex items-start justify-between">
