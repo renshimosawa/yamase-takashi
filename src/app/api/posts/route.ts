@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getServerAuthSession } from "@/lib/auth";
+import { isValidSmellType, type SmellType } from "@/constants/smell";
 type CreatePostRequest = {
   description: string;
+  smell_type: SmellType;
   latitude?: number | null;
   longitude?: number | null;
   intensity?: number | null;
-  emoji?: string | null;
 };
 
 export async function POST(request: Request) {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreatePostRequest;
-    const { description, latitude, longitude, intensity, emoji } = body;
+    const { description, smell_type, latitude, longitude, intensity } = body;
 
     if (!description || description.trim().length === 0) {
       return NextResponse.json(
@@ -34,9 +35,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (emoji && [...emoji].length !== 1) {
+    if (!isValidSmellType(smell_type)) {
       return NextResponse.json(
-        { error: "絵文字は1文字で入力してください" },
+        { error: "においタイプが不正です" },
         { status: 400 }
       );
     }
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       description,
       content: description,
       intensity: normalizedIntensity,
-      emoji: emoji ?? null,
+      smell_type,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
     });
@@ -81,7 +82,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("posts")
       .select(
-        "id, description, intensity, emoji, latitude, longitude, inserted_at"
+        "id, description, intensity, smell_type, latitude, longitude, inserted_at"
       )
       .order("inserted_at", { ascending: false })
       .limit(200);

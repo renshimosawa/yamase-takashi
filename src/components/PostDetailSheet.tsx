@@ -1,6 +1,11 @@
 "use client";
 
 import type { MapPostGroup } from "./OpenStreetMap";
+import {
+  getSmellIconPath,
+  SMELL_TYPE_LABELS,
+  type SmellType,
+} from "@/constants/smell";
 
 type PostDetailSheetProps = {
   group: MapPostGroup | null;
@@ -51,10 +56,20 @@ export default function PostDetailSheet({
           {group.posts.map((post) => (
             <li key={post.id} className="rounded-2xl bg-slate-100 p-4">
               <div className="mb-2 flex items-center gap-3 text-sm text-slate-600">
-                <span className="text-xl">{post.emoji ?? "📍"}</span>
-                <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700">
-                  Lv.{post.intensity ?? "-"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <img
+                    src={getSmellIconPath(post.smell_type ?? "hoya")}
+                    alt={
+                      SMELL_TYPE_LABELS[
+                        (post.smell_type ?? "hoya") as SmellType
+                      ]
+                    }
+                    className="h-8 w-8 rounded-full border border-slate-200 bg-slate-50 object-contain p-1"
+                  />
+                  <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700">
+                    Lv.{post.intensity ?? "-"}
+                  </span>
+                </div>
                 {post.inserted_at && (
                   <span className="text-xs text-slate-500">
                     {new Date(post.inserted_at).toLocaleString("ja-JP")}

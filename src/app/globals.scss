@@ -46,6 +46,23 @@ body {
   line-height: 1;
 }
 
+.marker-smell-pin {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.marker-smell-pin img {
+  width: 75%;
+  height: 75%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.leaflet-tooltip-top {
+  margin-top: -16px !important;
+}
 .post-cluster-icon {
   display: flex;
   align-items: center;
@@ -53,21 +70,28 @@ body {
   pointer-events: none;
 }
 
-.cluster-circle {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  align-items: center;
-  justify-items: center;
-  width: 56px;
-  height: 56px;
+.stacked-smell-icons {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 4px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #111827;
-  font-size: 16px;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
 }
 
-.cluster-circle span {
-  font-size: 16px;
+.stacked-smell-icons__item {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.stacked-smell-icons__item img {
+  width: 75%;
+  height: 75%;
+  object-fit: contain;
+  pointer-events: none;
 }

@@ -13,26 +13,28 @@ import L from "leaflet";
 import type { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+import {
+  getSmellIconPath,
+  isValidSmellType,
+  SMELL_TYPE_LABELS,
+  type SmellType,
+} from "@/constants/smell";
+import type { MapPostGroup } from "./OpenStreetMap";
+
 type MapPost = {
   id: string;
   description: string;
   latitude: number | null;
   longitude: number | null;
   intensity: number | null;
-  emoji: string | null;
+  smell_type: SmellType | null;
 };
 
 type LeafletMapProps = {
   center?: LatLngExpression;
   zoom?: number;
   posts?: MapPost[];
-  onMarkerSelect?: (group: {
-    latitude: number;
-    longitude: number;
-    posts: MapPost[];
-    tooltipLines: string[];
-    emojiSummary: string[];
-  }) => void;
+  onMarkerSelect?: (group: MapPostGroup) => void;
 };
 
 export default function LeafletMap({
@@ -45,57 +47,70 @@ export default function LeafletMap({
     40.5086, 141.4882,
   ]);
 
-  const fallbackEmoji = "📍";
-  const emojiIconCache = useRef(new Map<string, L.DivIcon>());
+  const smellIconCache = useRef(new Map<SmellType, L.DivIcon>());
 
-  const getEmojiIcon = useCallback(
-    (emoji?: string | null) => {
-      if (typeof window === "undefined") {
-        return undefined;
-      }
-
-      const key = emoji && emoji.trim() ? emoji : fallbackEmoji;
-      const cache = emojiIconCache.current;
-
-      if (!cache.has(key)) {
-        cache.set(
-          key,
-          L.divIcon({
-            className: "post-marker-icon",
-            html: `<span class="marker-emoji-pin">${key}</span>`,
-            iconSize: [36, 36],
-            iconAnchor: [18, 30],
-          })
-        );
-      }
-
-      return cache.get(key);
-    },
-    [fallbackEmoji]
-  );
-
-  const clusterIconCache = useRef(new Map<string, L.DivIcon>());
-
-  const getClusterIcon = useCallback((emojis: string[]) => {
+  const getSmellIcon = useCallback((smellType?: SmellType | null) => {
     if (typeof window === "undefined") {
       return undefined;
     }
 
-    const cache = clusterIconCache.current;
-    const key = emojis.join("|") || "_empty";
+    const fallback: SmellType = "hoya";
+    const key = smellType && isValidSmellType(smellType) ? smellType : fallback;
+    const cache = smellIconCache.current;
+
     if (!cache.has(key)) {
-      const grid = emojis
-        .slice(0, 9)
-        .map((emoji) => `<span>${emoji}</span>`)
+      const iconPath = getSmellIconPath(key);
+      cache.set(
+        key,
+        L.divIcon({
+          className: "post-marker-icon",
+          html: `<div class="marker-smell-pin"><img src="${iconPath}" alt="${SMELL_TYPE_LABELS[key]}" /></div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 28],
+        })
+      );
+    }
+
+    return cache.get(key);
+  }, []);
+
+  const clusterIconCache = useRef(new Map<string, L.DivIcon>());
+
+  const getClusterIcon = useCallback((smellTypes: SmellType[]) => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const uniqueTypes = Array.from(new Set(smellTypes));
+    if (uniqueTypes.length === 0) {
+      return undefined;
+    }
+
+    const cache = clusterIconCache.current;
+    const key = uniqueTypes.join("|") || "_empty";
+    if (!cache.has(key)) {
+      const maxItems = 4;
+      const sliced = uniqueTypes.slice(0, maxItems);
+      const baseSize = 28;
+      const gap = 6;
+      const itemCount = sliced.length;
+      const width = itemCount * baseSize + Math.max(0, itemCount - 1) * gap;
+      const height = baseSize;
+
+      const grid = sliced
+        .map((type) => {
+          const icon = getSmellIconPath(type);
+          return `<span class="stacked-smell-icons__item"><img src="${icon}" alt="${SMELL_TYPE_LABELS[type]}" /></span>`;
+        })
         .join("");
 
       cache.set(
         key,
         L.divIcon({
           className: "post-cluster-icon",
-          html: `<div class="cluster-circle">${grid}</div>`,
-          iconSize: [56, 56],
-          iconAnchor: [28, 28],
+          html: `<div class="stacked-smell-icons">${grid}</div>`,
+          iconSize: [width, height],
+          iconAnchor: [width / 2, height],
         })
       );
     }
@@ -133,7 +148,7 @@ export default function LeafletMap({
       longitude: number;
       posts: MapPost[];
       tooltipLines: string[];
-      emojiSummary: string[];
+      smellSummary: SmellType[];
     };
 
     const groups = new Map<string, GroupData>();
@@ -151,19 +166,20 @@ export default function LeafletMap({
         continue;
       }
 
-      const latKey = truncateToPrecision(post.latitude, 4);
-      const lngKey = truncateToPrecision(post.longitude, 4);
+      const latKey = truncateToPrecision(post.latitude, 3);
+      const lngKey = truncateToPrecision(post.longitude, 3);
       const key = `${latKey}:${lngKey}`;
-      const summary = `${post.emoji ?? fallbackEmoji}｜Lv.${
-        post.intensity ?? "-"
-      }｜${post.description}`;
+      const summary = `Lv.${post.intensity ?? "-"}｜${post.description}`;
 
       const existing = groups.get(key);
       if (existing) {
         existing.posts.push(post);
         existing.tooltipLines.push(summary);
-        if (existing.emojiSummary.length < 9) {
-          existing.emojiSummary.push(post.emoji ?? fallbackEmoji);
+        if (
+          post.smell_type &&
+          !existing.smellSummary.includes(post.smell_type)
+        ) {
+          existing.smellSummary.push(post.smell_type);
         }
       } else {
         groups.set(key, {
@@ -171,13 +187,13 @@ export default function LeafletMap({
           longitude: lngKey,
           posts: [post],
           tooltipLines: [summary],
-          emojiSummary: [post.emoji ?? fallbackEmoji],
+          smellSummary: post.smell_type ? [post.smell_type] : [],
         });
       }
     }
 
     return Array.from(groups.values());
-  }, [posts, fallbackEmoji]);
+  }, [posts]);
 
   return (
     <div className="h-full w-full">
@@ -204,9 +220,9 @@ export default function LeafletMap({
         />
         {groupedMarkers.map((group, index) => {
           const icon =
-            group.posts.length > 1
-              ? getClusterIcon(group.emojiSummary)
-              : getEmojiIcon(group.posts[0]?.emoji ?? undefined);
+            group.posts.length > 1 && group.smellSummary.length > 0
+              ? getClusterIcon(group.smellSummary)
+              : getSmellIcon(group.posts[0]?.smell_type ?? undefined);
 
           const markerKey = `${group.latitude}-${group.longitude}-${index}`;
           const handleSelect = () => onMarkerSelect?.(group);

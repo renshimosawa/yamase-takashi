@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
+import { SMELL_TYPE_OPTIONS, type SmellType } from "@/constants/smell";
+
 export type PostFormProps = {
   onSubmitted: () => Promise<void> | void;
   isLoading: boolean;
@@ -12,13 +14,13 @@ export type PostFormProps = {
 
 export type PostFormState = {
   intensity: number;
-  emoji: string;
+  smellType: SmellType;
   description: string;
 };
 
 const initialFormState: PostFormState = {
   intensity: 0,
-  emoji: "",
+  smellType: "hoya",
   description: "",
 };
 
@@ -60,7 +62,8 @@ export default function PostForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!form.description.trim()) {
+    const trimmedDescription = form.description.trim();
+    if (!trimmedDescription) {
       setMessage("自由入力欄を入力してください。");
       return;
     }
@@ -75,9 +78,9 @@ export default function PostForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          description: form.description,
+          description: trimmedDescription,
           intensity: form.intensity,
-          emoji: form.emoji || null,
+          smell_type: form.smellType,
           latitude: position?.coords.latitude ?? null,
           longitude: position?.coords.longitude ?? null,
         }),
@@ -109,7 +112,7 @@ export default function PostForm({
   }
 
   return (
-    <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
       <label className="text-xs uppercase tracking-[0.2em] text-white/60">
         においレベル (0〜3)
       </label>
@@ -135,19 +138,34 @@ export default function PostForm({
       </div>
 
       <label className="text-xs uppercase tracking-[0.2em] text-white/60">
-        絵文字 (1文字)
+        今日のにおいタイプ
       </label>
-      <input
-        type="text"
-        value={form.emoji}
-        onChange={(event) => {
-          const value = event.target.value;
-          const chars = [...value];
-          setForm((prev) => ({ ...prev, emoji: chars.slice(0, 1).join("") }));
-        }}
-        placeholder="🙂"
-        className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-base text-white shadow-inner outline-none transition focus:border-white/30 focus:bg-black/20"
-      />
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        {SMELL_TYPE_OPTIONS.map((option) => {
+          const isSelected = form.smellType === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() =>
+                setForm((prev) => ({ ...prev, smellType: option.value }))
+              }
+              className={`flex items-center gap-2 rounded-xl border bg-white/10 px-3 py-2 text-left transition ${
+                isSelected
+                  ? "border-white/80 bg-white/20 text-white"
+                  : "border-white/10 text-white/80 hover:border-white/30 hover:bg-white/15"
+              }`}
+            >
+              <img
+                src={option.icon}
+                alt={option.label}
+                className="h-8 w-8 flex-shrink-0 rounded-full border border-white/20 bg-black/20 object-contain p-1"
+              />
+              <span className="text-sm font-medium">{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
 
       <label className="text-xs uppercase tracking-[0.2em] text-white/60">
         自由入力 (50文字以内)
