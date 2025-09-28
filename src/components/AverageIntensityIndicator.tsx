@@ -70,14 +70,14 @@ export default function AverageIntensityIndicator({
     }
 
     if (isLoading) {
-      return "強度情報を取得中...";
+      return "におい情報を取得中...";
     }
 
     if (averageIntensity === null) {
       return "本日の投稿がまだありません";
     }
 
-    return `本日の平均強度: ${averageIntensity.toFixed(2)}`;
+    return `本日の平均臭いレベル: ${averageIntensity.toFixed(2)}`;
   }, [averageIntensity, error, isLoading]);
 
   const containerClassName = [
