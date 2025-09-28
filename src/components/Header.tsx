@@ -31,7 +31,7 @@ export default function Header({ session, status }: HeaderProps) {
   return (
     <header className="pointer-events-auto absolute left-6 right-6 top-6 z-[1000] flex items-center justify-between">
       <h1 className="rounded-full bg-black/70 p-4 text-xl font-semibold text-white shadow-lg backdrop-blur">
-        ヤマセくんのお知らせ
+        ヤマセくんの知らせ
       </h1>
       <div className="flex items-center gap-4">
         {isLoading ? (

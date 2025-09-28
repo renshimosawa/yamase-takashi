@@ -209,7 +209,7 @@ export default function Home() {
           tooltip={forecast?.wind ?? weatherCard.tooltip}
         />
       </aside>
-      <div className="pointer-events-auto absolute bottom-8 right-8 z-[1000]">
+      <div className="w-full pointer-events-auto absolute bottom-8 left-0 z-[1000] px-4">
         <FloatingPostButton
           onSubmitted={fetchPosts}
           isLoading={isLoadingPosts}
