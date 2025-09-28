@@ -28,9 +28,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (description.length > 50) {
+    if (description.length > 15) {
       return NextResponse.json(
-        { error: "自由入力欄は50文字以内で入力してください" },
+        { error: "自由入力欄は15文字以内で入力してください" },
         { status: 400 }
       );
     }
