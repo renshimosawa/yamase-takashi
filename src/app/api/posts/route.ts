@@ -3,6 +3,42 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getServerAuthSession } from "@/lib/auth";
 import { isValidSmellType, type SmellType } from "@/constants/smell";
+
+const JAPAN_TZ = "Asia/Tokyo";
+
+const getTodayDateRange = () => {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("ja-JP", {
+    timeZone: JAPAN_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const parts = formatter
+    .formatToParts(now)
+    .reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== "literal") {
+        acc[part.type] = part.value;
+      }
+      return acc;
+    }, {});
+
+  const year = parts.year;
+  const month = parts.month;
+  const day = parts.day;
+
+  const start = new Date(`${year}-${month}-${day}T00:00:00+09:00`);
+  const end = new Date(`${year}-${month}-${day}T23:59:59.999+09:00`);
+
+  return { start: start.toISOString(), end: end.toISOString() };
+};
+
+const getCleanupThreshold = (days = 7) => {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  return cutoff.toISOString();
+};
 type CreatePostRequest = {
   description: string;
   smell_type: SmellType | null;
@@ -90,11 +126,26 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const supabase = getSupabaseAdmin();
+
+    const cutoff = getCleanupThreshold();
+    const { error: cleanupError } = await supabase
+      .from("posts")
+      .delete()
+      .lt("inserted_at", cutoff);
+
+    if (cleanupError) {
+      console.error("Failed to cleanup old posts", cleanupError);
+    }
+
+    const { start, end } = getTodayDateRange();
+
     const { data, error } = await supabase
       .from("posts")
       .select(
         "id, description, intensity, smell_type, latitude, longitude, inserted_at"
       )
+      .gte("inserted_at", start)
+      .lte("inserted_at", end)
       .order("inserted_at", { ascending: false })
       .limit(200);
 
