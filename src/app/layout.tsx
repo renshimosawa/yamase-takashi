@@ -29,6 +29,7 @@ export const metadata: Metadata = {
     title: "ヤマセ君の知らせ",
     description:
       "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
+    url: "https://yamasekun-no-shirase.vercel.app/",
     images: [
       {
         url: "/yamasekun_base.png",
