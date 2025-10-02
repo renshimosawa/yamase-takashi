@@ -17,9 +17,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ヤマセ君の知らせ",
-  description: "",
+  description:
+    "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
   icons: {
     icon: "/favicon.png",
+  },
+  alternates: {
+    canonical: "https://yamasekun-no-shirase.vercel.app/",
+  },
+  openGraph: {
+    title: "ヤマセ君の知らせ",
+    description:
+      "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
+    images: [
+      {
+        url: "/yamasekun_base.png",
+        width: 1200,
+        height: 630,
+        alt: "ヤマセ君",
+      },
+    ],
   },
 };
 
