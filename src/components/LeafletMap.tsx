@@ -182,7 +182,11 @@ export default function LeafletMap({
       const latKey = truncateToPrecision(post.latitude, 3);
       const lngKey = truncateToPrecision(post.longitude, 3);
       const key = `${latKey}:${lngKey}`;
-      const summary = `Lv.${post.intensity ?? "-"}｜${post.description}`;
+      const trimmedDescription =
+        post.description.length > 15
+          ? `${post.description.slice(0, 15)}…`
+          : post.description;
+      const summary = `Lv.${post.intensity ?? "-"}｜${trimmedDescription}`;
 
       const existing = groups.get(key);
       if (existing) {
