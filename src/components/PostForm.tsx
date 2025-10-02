@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 import { SMELL_TYPE_OPTIONS, type SmellType } from "@/constants/smell";
 
@@ -110,9 +110,18 @@ export default function PostForm({
 
   if (status !== "authenticated" || !session?.user) {
     return (
-      <p className="text-xs text-white/70">
-        投稿機能を利用するには Google でログインしてください。
-      </p>
+      <div className="flex flex-col gap-3">
+        <p className="text-xs text-white/70">
+          投稿機能を利用するには Google でログインしてください。
+        </p>
+        <button
+          type="button"
+          onClick={() => signIn("google")}
+          className="flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-white/90"
+        >
+          Googleでサインイン
+        </button>
+      </div>
     );
   }
 
