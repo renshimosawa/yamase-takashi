@@ -185,17 +185,17 @@ export default function PostForm({
       </div>
 
       <label className="text-xs uppercase tracking-[0.2em] text-white/60">
-        自由入力 (15文字以内)
+        自由入力 (50文字以内)
       </label>
       <textarea
         value={form.description}
         onChange={(event) =>
           setForm((prev) => ({
             ...prev,
-            description: event.target.value.slice(0, 15),
+            description: event.target.value.slice(0, 50),
           }))
         }
-        placeholder="周辺の状況を入力 (15文字以内)"
+        placeholder="今のお気持ちをどうぞ (50文字以内)"
         rows={4}
         className="h-28 w-full resize-none rounded-xl border border-white/10 bg-white/10 p-3 text-sm text-white shadow-inner outline-none transition focus:border-white/30 focus:bg-black/20"
       />
