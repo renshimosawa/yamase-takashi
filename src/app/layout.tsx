@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://yamasekun-no-shirase.vercel.app"),
   title: "ヤマセ君の知らせ",
   description:
     "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/yamasekun_base.png",
+        url: "https://yamasekun-no-shirase.vercel.app/yamasekun_base.png",
         width: 1200,
         height: 630,
         alt: "ヤマセ君",
