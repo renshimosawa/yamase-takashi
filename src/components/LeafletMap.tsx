@@ -8,6 +8,7 @@ import {
   TileLayer,
   Tooltip,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
 import type { LatLngExpression } from "leaflet";
@@ -46,9 +47,11 @@ export default function LeafletMap({
   posts = [],
   onMarkerSelect,
 }: LeafletMapProps) {
-  const [userPosition, setUserPosition] = useState<LatLngExpression | null>([
-    40.5086, 141.4882,
-  ]);
+  const [userPosition, setUserPosition] = useState<LatLngExpression | null>(
+    null
+  );
+  const [hasGeolocationFix, setHasGeolocationFix] = useState(false);
+  const [shouldFollowUser, setShouldFollowUser] = useState(true);
 
   const smellIconCache = useRef(new Map<SmellType, L.DivIcon>());
 
@@ -139,6 +142,7 @@ export default function LeafletMap({
     const onSuccess = (position: GeolocationPosition) => {
       const { latitude, longitude } = position.coords;
       setUserPosition([latitude, longitude]);
+      setHasGeolocationFix(true);
     };
 
     const watcherId = navigator.geolocation.watchPosition(onSuccess, () => {
@@ -150,9 +154,26 @@ export default function LeafletMap({
     };
   }, []);
 
-  const defaultCenter = useMemo<LatLngExpression>(
-    () => userPosition ?? center ?? [35.6809591, 139.7673068],
-    [userPosition, center]
+  const fallbackCenter = useMemo<LatLngExpression>(
+    () => center ?? [40.5086, 141.4882],
+    [center]
+  );
+
+  const effectiveCenter = useMemo<LatLngExpression>(
+    () => userPosition ?? fallbackCenter,
+    [userPosition, fallbackCenter]
+  );
+
+  const handleUserInteraction = useCallback(() => {
+    setShouldFollowUser((prev) => (prev ? false : prev));
+  }, []);
+
+  const handleMarkerSelect = useCallback(
+    (group: MapPostGroup) => {
+      setShouldFollowUser(false);
+      onMarkerSelect?.(group);
+    },
+    [onMarkerSelect]
   );
 
   const groupedMarkers = useMemo(() => {
@@ -222,21 +243,41 @@ export default function LeafletMap({
   }, [posts]);
 
   return (
-    <div className="h-full w-full">
+    <div className="relative h-full w-full">
+      {hasGeolocationFix && (
+        <div className="pointer-events-none absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (userPosition) {
+                setShouldFollowUser(true);
+              }
+            }}
+            className="pointer-events-auto rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-white"
+            aria-label="現在地に戻る"
+          >
+            現在地に戻る
+          </button>
+        </div>
+      )}
       <MapContainer
-        center={defaultCenter}
+        center={effectiveCenter}
         zoom={zoom}
         scrollWheelZoom
         className="h-full w-full"
         zoomControl={false}
       >
-        <MapViewUpdater position={defaultCenter} />
+        <MapInteractionHandler onUserInteraction={handleUserInteraction} />
+        <MapViewUpdater
+          position={effectiveCenter}
+          shouldFollowUser={shouldFollowUser}
+        />
         <TileLayer
           attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <CircleMarker
-          center={defaultCenter}
+          center={userPosition ?? fallbackCenter}
           radius={10}
           pathOptions={{
             color: "#2563eb",
@@ -268,7 +309,7 @@ export default function LeafletMap({
             });
 
           const markerKey = `${group.latitude}-${group.longitude}-${index}`;
-          const handleSelect = () => onMarkerSelect?.(group);
+          const handleSelect = () => handleMarkerSelect(group);
 
           return (
             <Marker
@@ -276,9 +317,7 @@ export default function LeafletMap({
               position={[group.latitude, group.longitude]}
               icon={icon}
               eventHandlers={{
-                click: () => {
-                  onMarkerSelect?.(group);
-                },
+                click: handleSelect,
               }}
             >
               <Tooltip
@@ -297,7 +336,7 @@ export default function LeafletMap({
                   onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      onMarkerSelect?.(group);
+                      handleMarkerSelect(group);
                     }
                   }}
                   className="space-y-2"
@@ -329,14 +368,34 @@ export default function LeafletMap({
 
 type MapViewUpdaterProps = {
   position: LatLngExpression;
+  shouldFollowUser: boolean;
 };
 
-function MapViewUpdater({ position }: MapViewUpdaterProps) {
+function MapViewUpdater({ position, shouldFollowUser }: MapViewUpdaterProps) {
   const map = useMap();
 
   useEffect(() => {
+    if (!shouldFollowUser) {
+      return;
+    }
     map.setView(position);
-  }, [map, position]);
+  }, [map, position, shouldFollowUser]);
+
+  return null;
+}
+
+type MapInteractionHandlerProps = {
+  onUserInteraction: () => void;
+};
+
+function MapInteractionHandler({
+  onUserInteraction,
+}: MapInteractionHandlerProps) {
+  useMapEvents({
+    dragstart: onUserInteraction,
+    zoomstart: onUserInteraction,
+    movestart: onUserInteraction,
+  });
 
   return null;
 }
