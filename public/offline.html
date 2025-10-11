@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>オフラインです | ヤマセ君の知らせ</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #1e293b, #020617);
+        color: #f8fafc;
+        text-align: center;
+        padding: 24px;
+      }
+      .card {
+        max-width: 360px;
+        background: rgba(15, 23, 42, 0.85);
+        border-radius: 16px;
+        padding: 32px 24px;
+        box-shadow: 0 20px 50px rgba(2, 6, 23, 0.4);
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+      }
+      p {
+        margin: 0 0 16px;
+        line-height: 1.6;
+      }
+      .icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+      }
+      .hint {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon">📡</div>
+      <h1>オフラインになっています</h1>
+      <p>
+        ネットワークに接続されていないため、最新のヤマセ君情報を読み込めません。
+      </p>
+      <p class="hint">
+        接続を復旧したら、この画面を閉じて再読み込みしてください。
+      </p>
+    </div>
+  </body>
+</html>

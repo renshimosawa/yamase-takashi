@@ -22,7 +22,10 @@ export const metadata: Metadata = {
     "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
   icons: {
     icon: "/favicon.png",
+    apple: "/yamasekun_base.png",
   },
+  manifest: "/manifest.webmanifest",
+  themeColor: "#ff5e62",
   alternates: {
     canonical: "https://yamasekun-no-shirase.vercel.app/",
   },
@@ -40,6 +43,14 @@ export const metadata: Metadata = {
         alt: "ヤマセ君",
       },
     ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ヤマセ君の知らせ",
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
