@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import FloatingPostButton from "@/components/FloatingPostButton";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import WeatherCircle from "@/components/WeatherCircle";
+import RefreshButton from "@/components/RefreshButton";
 import type { MapPost, MapPostGroup } from "@/components/OpenStreetMap";
 import AverageIntensityIndicator from "@/components/AverageIntensityIndicator";
 
@@ -157,6 +158,7 @@ export default function Home() {
   const [postError, setPostError] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<MapPostGroup | null>(null);
   const [indicatorRefreshToken, setIndicatorRefreshToken] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchPosts = useCallback(async () => {
     setIsLoadingPosts(true);
@@ -189,6 +191,41 @@ export default function Home() {
     void fetchPosts();
   }, [fetchPosts]);
 
+  const refreshAllData = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // 天気情報を更新
+      const forecastData = await fetchHachinoheForecast();
+      const today = forecastData.forecasts[0];
+      setForecast({
+        weather: today?.detail.weather ?? today?.telop ?? "--",
+        maxTemperature: today?.temperature.max.celsius ?? null,
+        minTemperature: today?.temperature.min.celsius ?? null,
+        wind: today?.detail.wind ?? "--",
+      });
+
+      // 現在の気温を更新
+      try {
+        const temp = await fetchCurrentTemperature(40.5086, 141.482);
+        setCurrentTemp(temp);
+        setTempError(null);
+      } catch (err) {
+        setTempError(
+          err instanceof Error ? err.message : "気温の取得に失敗しました。"
+        );
+      }
+
+      // 投稿データを更新
+      await fetchPosts();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "データの更新に失敗しました。"
+      );
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [fetchPosts]);
+
   return (
     <div className="font-sans relative min-h-[100svh] w-screen overflow-hidden">
       <div className="absolute inset-0">
@@ -212,6 +249,9 @@ export default function Home() {
           tooltip={forecast?.wind ?? weatherCard.tooltip}
         />
       </aside>
+      <div className="pointer-events-auto absolute right-6 top-32 z-[1000]">
+        <RefreshButton onRefresh={refreshAllData} isLoading={isRefreshing} />
+      </div>
       <div className="w-full pointer-events-auto absolute bottom-8 left-0 z-[1100] px-4">
         <FloatingPostButton
           onSubmitted={fetchPosts}
