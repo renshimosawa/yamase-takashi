@@ -245,7 +245,7 @@ export default function LeafletMap({
   return (
     <div className="relative h-full w-full">
       {hasGeolocationFix && (
-        <div className="pointer-events-none absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
+        <div className="pointer-events-none absolute top-[185px] right-[23px] z-[1000] flex flex-col gap-2">
           <button
             type="button"
             onClick={() => {
@@ -253,10 +253,30 @@ export default function LeafletMap({
                 setShouldFollowUser(true);
               }
             }}
-            className="pointer-events-auto rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-white"
+            className="pointer-events-auto rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 p-3 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 transform"
             aria-label="現在地に戻る"
+            title="現在地に戻る"
           >
-            現在地に戻る
+            <svg
+              className="w-5 h-5 text-gray-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
           </button>
         </div>
       )}
