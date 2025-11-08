@@ -5,6 +5,8 @@ import "./globals.scss";
 import { getServerAuthSession } from "@/lib/auth";
 import Providers from "@/components/Providers";
 
+export const dynamic = "force-dynamic";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

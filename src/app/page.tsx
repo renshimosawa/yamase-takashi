@@ -1,6 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
+export const dynamic = "force-dynamic";
+
+import dynamicImport from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
@@ -13,9 +15,12 @@ import RefreshButton from "@/components/RefreshButton";
 import type { MapPost, MapPostGroup } from "@/components/OpenStreetMap";
 import AverageIntensityIndicator from "@/components/AverageIntensityIndicator";
 
-const OpenStreetMap = dynamic(() => import("@/components/OpenStreetMap"), {
-  ssr: false,
-});
+const OpenStreetMap = dynamicImport(
+  () => import("@/components/OpenStreetMap"),
+  {
+    ssr: false,
+  }
+);
 
 type TodayForecast = {
   weather: string;
