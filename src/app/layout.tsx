@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://yamasekun-no-shirase.vercel.app/yamasekun_base.png",
+        url: "https://yamasekun-no-shirase.vercel.app/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "ヤマセ君",
