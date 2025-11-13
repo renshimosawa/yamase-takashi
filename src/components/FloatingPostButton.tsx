@@ -1,18 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import type { Session } from "next-auth";
 import PostForm from "./PostForm";
 
 type FloatingPostButtonProps = {
   onSubmitted: () => Promise<void> | void;
   isLoading: boolean;
   error: string | null;
+  session: Session | null;
+  status: "loading" | "authenticated" | "unauthenticated";
 };
 
 export default function FloatingPostButton({
   onSubmitted,
   isLoading,
   error,
+  session,
+  status,
 }: FloatingPostButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -67,10 +72,14 @@ export default function FloatingPostButton({
             </button>
           </div>
           <PostForm
-            onSubmitted={onSubmitted}
+            onSubmitted={async () => {
+              await onSubmitted();
+            }}
             isLoading={isLoading}
             error={error}
             onClose={() => setIsOpen(false)}
+            session={session}
+            status={status}
           />
         </div>
       )}

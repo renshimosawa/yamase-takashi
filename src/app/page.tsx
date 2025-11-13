@@ -3,8 +3,9 @@
 export const dynamic = "force-dynamic";
 
 import dynamicImport from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Session } from "next-auth";
+import { getSession } from "next-auth/react";
 
 import { fetchCurrentTemperature, fetchHachinoheForecast } from "@/lib/weather";
 import Header from "@/components/Header";
@@ -52,7 +53,10 @@ const getWindDirectionArrow = (wind: string | null) => {
 };
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const [session, setSession] = useState<Session | null>(null);
+  const [authStatus, setAuthStatus] = useState<
+    "loading" | "authenticated" | "unauthenticated"
+  >("loading");
   const [forecast, setForecast] = useState<TodayForecast | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +89,36 @@ export default function Home() {
     };
 
     loadForecast();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSession = async () => {
+      try {
+        const sessionData = await getSession();
+        if (!isMounted) return;
+
+        if (sessionData) {
+          setSession(sessionData);
+          setAuthStatus("authenticated");
+        } else {
+          setSession(null);
+          setAuthStatus("unauthenticated");
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        console.error("[auth] Failed to load session", error);
+        setSession(null);
+        setAuthStatus("unauthenticated");
+      }
+    };
+
+    void loadSession();
 
     return () => {
       isMounted = false;
@@ -236,7 +270,7 @@ export default function Home() {
       <div className="absolute inset-0">
         <OpenStreetMap posts={posts} onMarkerSelect={setSelectedGroup} />
       </div>
-      <Header session={session ?? null} status={status} />
+      <Header session={session} status={authStatus} />
       <aside className="pointer-events-none absolute left-6 top-32 z-[1000] flex flex-col gap-4">
         <WeatherCircle
           icon={weatherCard.weather}
@@ -262,6 +296,8 @@ export default function Home() {
           onSubmitted={fetchPosts}
           isLoading={isLoadingPosts}
           error={postError}
+          session={session}
+          status={authStatus}
         />
       </div>
       <AverageIntensityIndicator

@@ -54,5 +54,9 @@ export default function Providers({ session, children }: ProvidersProps) {
     };
   }, []);
 
+  if (typeof window === "undefined") {
+    return <>{children}</>;
+  }
+
   return <SessionProvider session={session}>{children}</SessionProvider>;
 }

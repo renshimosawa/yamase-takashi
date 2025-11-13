@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import type { Session } from "next-auth";
 
 import { SMELL_TYPE_OPTIONS, type SmellType } from "@/constants/smell";
 
@@ -10,6 +11,8 @@ export type PostFormProps = {
   isLoading: boolean;
   error: string | null;
   onClose: () => void;
+  session: Session | null;
+  status: "loading" | "authenticated" | "unauthenticated";
 };
 
 export type PostFormState = {
@@ -61,8 +64,9 @@ export default function PostForm({
   isLoading,
   error,
   onClose,
+  session,
+  status,
 }: PostFormProps) {
-  const { data: session, status } = useSession();
   const [form, setForm] = useState<PostFormState>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
