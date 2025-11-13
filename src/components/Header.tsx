@@ -41,7 +41,7 @@ export default function Header({ session, status }: HeaderProps) {
             <button
               type="button"
               onClick={() => setIsMenuOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-white/90"
+              className="flex items-center gap-2 rounded-full bg-white px-2 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-white/90"
               aria-haspopup="true"
               aria-expanded={isMenuOpen}
             >
@@ -49,9 +49,6 @@ export default function Header({ session, status }: HeaderProps) {
                 {session.user?.name?.charAt(0) ??
                   session.user?.email?.charAt(0) ??
                   "?"}
-              </span>
-              <span className="max-w-[12rem] truncate">
-                {session.user?.name ?? session.user?.email ?? "ユーザー"}
               </span>
             </button>
             {isMenuOpen && (
