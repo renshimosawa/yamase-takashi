@@ -281,7 +281,7 @@ export default function PostForm({
         }
         placeholder="今のお気持ちをどうぞ (50文字以内)"
         rows={4}
-        className="h-28 w-full resize-none rounded-xl border border-white/10 bg-white/10 p-3 text-sm text-white shadow-inner outline-none transition focus:border-white/30 focus:bg-black/20"
+        className="h-28 w-full resize-none rounded-xl border border-white/10 bg-white/10 p-3 text-base text-white shadow-inner outline-none transition focus:border-white/30 focus:bg-black/20"
       />
 
       <div className="flex flex-col gap-3 text-xs text-white/80">
