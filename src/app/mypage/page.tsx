@@ -171,7 +171,9 @@ export default function MyPage() {
         <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold tracking-wide">マイページ</h2>
+              <h2 className="text-xl font-semibold tracking-wide">
+                マイページ
+              </h2>
               <p className="text-sm text-white/70">{headerMessage}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -232,9 +234,7 @@ export default function MyPage() {
           <section className="grid gap-4">
             {posts.map((post) => {
               const isNeutral = post.intensity === 0;
-              const icon = isNeutral
-                ? post.emoji ?? NEUTRAL_SMELL_EMOJI
-                : null;
+              const icon = isNeutral ? post.emoji ?? NEUTRAL_SMELL_EMOJI : null;
               const smellLabel =
                 post.smell_type && SMELL_TYPE_LABELS[post.smell_type];
               const formattedDate = post.inserted_at
@@ -284,9 +284,7 @@ export default function MyPage() {
                       {post.description}
                     </p>
                     <div className="grid gap-2 text-xs text-white/60 sm:grid-cols-2">
-                      {formattedDate && (
-                        <span>投稿日時: {formattedDate}</span>
-                      )}
+                      {formattedDate && <span>投稿日時: {formattedDate}</span>}
                       {typeof post.latitude === "number" &&
                         typeof post.longitude === "number" && (
                           <span>
@@ -305,4 +303,3 @@ export default function MyPage() {
     </div>
   );
 }
-

@@ -30,7 +30,7 @@ export default function Header({ session, status }: HeaderProps) {
   }, [isMenuOpen]);
 
   return (
-    <header className="pointer-events-auto absolute left-6 right-6 top-6 z-[1000] flex items-center justify-between">
+    <header className="pointer-events-auto absolute left-6 right-6 top-6 z-[3000] flex items-center justify-between">
       <h1 className="rounded-full bg-black/70 p-4 text-xl font-semibold text-white shadow-lg backdrop-blur">
         ヤマセ君の知らせ
       </h1>
@@ -53,7 +53,7 @@ export default function Header({ session, status }: HeaderProps) {
               </span>
             </button>
             {isMenuOpen && (
-              <div className="absolute right-0 mt-3 w-48 rounded-xl bg-black/80 p-3 text-white shadow-xl backdrop-blur">
+              <div className="absolute right-0 z-[3100] mt-3 w-48 rounded-xl bg-black/80 p-3 text-white shadow-xl backdrop-blur">
                 <Link
                   href="/mypage"
                   onClick={() => setIsMenuOpen(false)}
