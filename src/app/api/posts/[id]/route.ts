@@ -3,20 +3,14 @@ import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
-
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(_request: Request, context: any) {
   try {
     const session = await getServerAuthSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const postId = context.params.id;
+    const postId = context?.params?.id as string | undefined;
     if (!postId || typeof postId !== "string") {
       return NextResponse.json(
         { error: "投稿IDが不正です" },

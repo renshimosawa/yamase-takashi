@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session } from "next-auth";
 import PostForm from "./PostForm";
 
@@ -20,6 +20,27 @@ export default function FloatingPostButton({
   status,
 }: FloatingPostButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   return (
     <div className="relative w-full">
@@ -56,31 +77,39 @@ export default function FloatingPostButton({
       </button>
       {isOpen && (
         <div
-          className="absolute bottom-15 left-0 w-full max-w-[500px] rounded-2xl bg-black/80 p-6 text-white shadow-2xl backdrop-blur"
-          style={{ zIndex: 1200 }}
+          className="fixed inset-0 z-[1300] flex items-end justify-center p-4 sm:items-center sm:p-8"
           role="dialog"
+          aria-modal="true"
         >
-          <div className="mb-4 flex items-start justify-between">
-            <h2 className="text-lg font-semibold">投稿を作成</h2>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="text-white/60 transition hover:text-white"
-              aria-label="閉じる"
-            >
-              ✕
-            </button>
-          </div>
-          <PostForm
-            onSubmitted={async () => {
-              await onSubmitted();
-            }}
-            isLoading={isLoading}
-            error={error}
-            onClose={() => setIsOpen(false)}
-            session={session}
-            status={status}
+          <button
+            type="button"
+            aria-label="モーダルを閉じる"
+            onClick={() => setIsOpen(false)}
+            className="absolute inset-0 cursor-pointer bg-black/70 backdrop-blur-sm transition-opacity"
           />
+          <div className="relative z-10 w-full max-w-[500px] max-h-[90svh] overflow-y-auto rounded-3xl border border-white/10 bg-black/80 p-6 text-white shadow-[0_20px_60px_rgba(0,0,0,0.6)] backdrop-blur">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <h2 className="text-lg font-semibold">投稿を作成</h2>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-white/60 transition hover:text-white"
+                aria-label="閉じる"
+              >
+                ✕
+              </button>
+            </div>
+            <PostForm
+              onSubmitted={async () => {
+                await onSubmitted();
+              }}
+              isLoading={isLoading}
+              error={error}
+              onClose={() => setIsOpen(false)}
+              session={session}
+              status={status}
+            />
+          </div>
         </div>
       )}
     </div>
