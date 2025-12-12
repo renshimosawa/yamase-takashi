@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { Session } from "next-auth";
 import { useEffect, useRef, useState } from "react";
 import { signIn, signOut } from "next-auth/react";
@@ -53,6 +54,13 @@ export default function Header({ session, status }: HeaderProps) {
             </button>
             {isMenuOpen && (
               <div className="absolute right-0 mt-3 w-48 rounded-xl bg-black/80 p-3 text-white shadow-xl backdrop-blur">
+                <Link
+                  href="/mypage"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-white/10"
+                >
+                  マイページ
+                </Link>
                 <button
                   type="button"
                   onClick={() => {
