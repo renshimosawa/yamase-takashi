@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getServerAuthSession } from "@/lib/auth";
-import { isValidSmellType, type SmellType } from "@/constants/smell";
+import {
+  isValidNeutralSmellEmoji,
+  isValidSmellType,
+  NEUTRAL_SMELL_EMOJI,
+  type SmellType,
+} from "@/constants/smell";
 
 const JAPAN_TZ = "Asia/Tokyo";
 
@@ -45,6 +50,7 @@ type CreatePostRequest = {
   latitude?: number | null;
   longitude?: number | null;
   intensity?: number | null;
+  emoji?: string | null;
 };
 
 export async function POST(request: Request) {
@@ -55,7 +61,8 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreatePostRequest;
-    const { description, smell_type, latitude, longitude, intensity } = body;
+    const { description, smell_type, latitude, longitude, intensity, emoji } =
+      body;
 
     if (!description || description.trim().length === 0) {
       return NextResponse.json(
@@ -83,6 +90,9 @@ export async function POST(request: Request) {
       );
     }
 
+    const sanitizedEmoji =
+      typeof emoji === "string" ? emoji.trim() || null : null;
+
     if (normalizedIntensity !== null && normalizedIntensity > 0) {
       if (!smell_type) {
         return NextResponse.json(
@@ -92,7 +102,29 @@ export async function POST(request: Request) {
       }
     }
 
+    if (normalizedIntensity === 0) {
+      if (!sanitizedEmoji || !isValidNeutralSmellEmoji(sanitizedEmoji)) {
+        return NextResponse.json(
+          { error: "ピン用の絵文字が不正です" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (normalizedIntensity !== null && normalizedIntensity > 0) {
+      if (sanitizedEmoji) {
+        console.warn(
+          "Ignoring emoji for non-neutral post submission",
+          sanitizedEmoji
+        );
+      }
+    }
+
     const storedSmellType = normalizedIntensity === 0 ? null : smell_type;
+    const storedEmoji =
+      normalizedIntensity === 0
+        ? sanitizedEmoji ?? NEUTRAL_SMELL_EMOJI
+        : null;
 
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.from("posts").insert({
@@ -101,6 +133,7 @@ export async function POST(request: Request) {
       content: description,
       intensity: normalizedIntensity,
       smell_type: storedSmellType,
+      emoji: storedEmoji,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
     });
@@ -142,7 +175,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("posts")
       .select(
-        "id, description, intensity, smell_type, latitude, longitude, inserted_at"
+        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at"
       )
       .gte("inserted_at", start)
       .lte("inserted_at", end)

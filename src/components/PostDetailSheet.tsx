@@ -62,7 +62,9 @@ export default function PostDetailSheet({
                     <div className="mb-2 flex items-center gap-3 text-sm text-slate-600">
                       <div className="flex items-center gap-2">
                         {post.intensity === 0 ? (
-                          <span className="text-xl">{NEUTRAL_SMELL_EMOJI}</span>
+                          <span className="text-xl">
+                            {post.emoji ?? NEUTRAL_SMELL_EMOJI}
+                          </span>
                         ) : (
                           <img
                             src={getSmellIconPath(post.smell_type ?? "hoya")}

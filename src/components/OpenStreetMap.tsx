@@ -12,6 +12,7 @@ export type MapPost = {
   longitude: number | null;
   intensity: number | null;
   smell_type: SmellType | null;
+  emoji?: string | null;
   inserted_at?: string | null;
 };
 

@@ -1,10 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import type { Session } from "next-auth";
 
-import { SMELL_TYPE_OPTIONS, type SmellType } from "@/constants/smell";
+import {
+  isValidNeutralSmellEmoji,
+  NEUTRAL_SMELL_EMOJI,
+  SMELL_TYPE_OPTIONS,
+  type SmellType,
+} from "@/constants/smell";
+import EmojiPicker from "@/components/EmojiPicker";
 
 export type PostFormProps = {
   onSubmitted: () => Promise<void> | void;
@@ -19,6 +25,7 @@ export type PostFormState = {
   intensity: number;
   smellType: SmellType | null;
   description: string;
+  emoji: string;
 };
 
 type LocationState =
@@ -39,6 +46,7 @@ const initialFormState: PostFormState = {
   intensity: 0,
   smellType: null,
   description: "",
+  emoji: NEUTRAL_SMELL_EMOJI,
 };
 
 async function getCurrentPosition(): Promise<GeolocationPosition | null> {
@@ -75,6 +83,8 @@ export default function PostForm({
     coordinates: null,
     error: null,
   });
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const emojiPickerWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const requestLocation = useCallback(async () => {
     setLocationState((prev) => ({
@@ -116,9 +126,10 @@ export default function PostForm({
 
   useEffect(() => {
     if (status !== "authenticated") {
-      setForm(initialFormState);
+      setForm({ ...initialFormState });
       setMessage(null);
       setLocationState({ status: "idle", coordinates: null, error: null });
+      setIsEmojiPickerOpen(false);
       return;
     }
 
@@ -126,6 +137,50 @@ export default function PostForm({
       void requestLocation();
     }
   }, [status, requestLocation]);
+
+  useEffect(() => {
+    if (!isEmojiPickerOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerWrapperRef.current &&
+        !emojiPickerWrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsEmojiPickerOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsEmojiPickerOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isEmojiPickerOpen]);
+
+  useEffect(() => {
+    if (form.intensity !== 0 && isEmojiPickerOpen) {
+      setIsEmojiPickerOpen(false);
+    }
+  }, [form.intensity, isEmojiPickerOpen]);
+
+  const handleEmojiSelect = useCallback((emoji: string) => {
+    setForm((prev) => ({
+      ...prev,
+      emoji,
+    }));
+    setMessage(null);
+    setIsEmojiPickerOpen(false);
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -138,6 +193,18 @@ export default function PostForm({
     if (form.intensity > 0 && !form.smellType) {
       setMessage("においタイプを選択してください。");
       return;
+    }
+
+    if (form.intensity === 0) {
+      const normalizedEmoji = form.emoji.trim();
+      if (!normalizedEmoji) {
+        setMessage("ピンに表示する絵文字を選択してください。");
+        return;
+      }
+      if (!isValidNeutralSmellEmoji(normalizedEmoji)) {
+        setMessage("有効な絵文字を選択してください。");
+        return;
+      }
     }
 
     if (locationState.status !== "success" || !locationState.coordinates) {
@@ -159,6 +226,10 @@ export default function PostForm({
           description: trimmedDescription,
           intensity: form.intensity,
           smell_type: form.intensity === 0 ? null : form.smellType,
+          emoji:
+            form.intensity === 0 && form.emoji.trim()
+              ? form.emoji.trim()
+              : null,
           latitude: locationState.coordinates.latitude,
           longitude: locationState.coordinates.longitude,
         }),
@@ -169,7 +240,8 @@ export default function PostForm({
         throw new Error(data.error ?? "投稿に失敗しました。");
       }
 
-      setForm(initialFormState);
+      setForm({ ...initialFormState });
+      setIsEmojiPickerOpen(false);
       setMessage("投稿しました。");
       await onSubmitted();
       onClose();
@@ -211,16 +283,21 @@ export default function PostForm({
         max={3}
         step={1}
         value={form.intensity}
-        onChange={(event) =>
-          setForm((prev) => {
-            const nextIntensity = Number(event.target.value);
-            return {
-              ...prev,
-              intensity: nextIntensity,
-              smellType: nextIntensity === 0 ? null : prev.smellType,
-            };
-          })
-        }
+        onChange={(event) => {
+          const nextIntensity = Number(event.target.value);
+          setForm((prev) => ({
+            ...prev,
+            intensity: nextIntensity,
+            smellType: nextIntensity === 0 ? null : prev.smellType,
+            emoji:
+              nextIntensity === 0
+                ? prev.emoji || NEUTRAL_SMELL_EMOJI
+                : prev.emoji,
+          }));
+          if (nextIntensity !== 0) {
+            setIsEmojiPickerOpen(false);
+          }
+        }}
         className="accent-white"
       />
       <div className="flex items-center justify-between text-xs text-white/70">
@@ -267,6 +344,46 @@ export default function PostForm({
           );
         })}
       </div>
+
+      {form.intensity === 0 && (
+        <div className="relative" ref={emojiPickerWrapperRef}>
+          <label className="text-xs uppercase tracking-[0.2em] text-white/60">
+            ピンに表示する絵文字
+          </label>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-3xl leading-none text-white shadow-inner">
+              {form.emoji || NEUTRAL_SMELL_EMOJI}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setMessage(null);
+                setIsEmojiPickerOpen((prev) => !prev);
+              }}
+              className="rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40 hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              aria-expanded={isEmojiPickerOpen}
+              aria-haspopup="dialog"
+            >
+              絵文字を選ぶ
+            </button>
+            <button
+              type="button"
+              onClick={() => handleEmojiSelect(NEUTRAL_SMELL_EMOJI)}
+              className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/70 transition hover:border-white/30 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            >
+              デフォルトに戻す
+            </button>
+          </div>
+          <p className="mt-1 text-[11px] text-white/60">
+            Slack のような絵文字ピッカーから好きなアイコンを選べます。
+          </p>
+          {isEmojiPickerOpen && (
+            <div className="absolute top-0 left-0 z-[2000] mt-3 w-[min(320px,90vw)]">
+              <EmojiPicker onSelect={handleEmojiSelect} />
+            </div>
+          )}
+        </div>
+      )}
 
       <label className="text-xs uppercase tracking-[0.2em] text-white/60">
         自由入力 (50文字以内)

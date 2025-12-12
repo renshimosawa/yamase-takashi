@@ -9,9 +9,9 @@ export const SMELL_TYPE_ORDER = [
 
 export type SmellType = (typeof SMELL_TYPE_ORDER)[number];
 
-export const NEUTRAL_SMELL_KEY = "_neutral" as const;
-export const NEUTRAL_SMELL_EMOJI = "😊";
-export type SmellSummaryValue = SmellType | typeof NEUTRAL_SMELL_KEY;
+export type NeutralSmellEmoji = string;
+export const NEUTRAL_SMELL_EMOJI: NeutralSmellEmoji = "😊";
+export type SmellSummaryValue = SmellType | NeutralSmellEmoji;
 
 export const SMELL_TYPE_LABELS: Record<SmellType, string> = {
   hoya: "ホヤ",
@@ -49,3 +49,34 @@ export const getSmellIconPath = (smellType: SmellType | null | undefined) =>
   smellType && SMELL_TYPE_ICON_PATHS[smellType]
     ? SMELL_TYPE_ICON_PATHS[smellType]
     : SMELL_TYPE_ICON_PATHS.hoya;
+
+export const isValidNeutralSmellEmoji = (
+  value: string | null | undefined
+): value is NeutralSmellEmoji => {
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  const graphemes =
+    typeof Intl !== "undefined" && "Segmenter" in Intl
+      ? Array.from(
+          new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(
+            trimmed
+          ),
+          (segment) => segment.segment
+        )
+      : Array.from(trimmed);
+
+  if (graphemes.length !== 1) {
+    return false;
+  }
+
+  const emojiRegex =
+    /^\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*$/u;
+  return emojiRegex.test(trimmed);
+};
