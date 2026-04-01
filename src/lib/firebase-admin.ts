@@ -13,7 +13,7 @@ const hasRequiredFirebaseAdminConfig = () =>
 const normalizePrivateKey = (value: string) =>
   value
     .trim()
-    .replace(/^"(.*)"$/s, "$1")
+    .replace(/^"([\s\S]*)"$/, "$1")
     .replace(/\\n/g, "\n");
 
 function getFirebaseAdminApp() {
