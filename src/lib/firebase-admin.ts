@@ -10,6 +10,12 @@ const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY;
 const hasRequiredFirebaseAdminConfig = () =>
   Boolean(FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY);
 
+const normalizePrivateKey = (value: string) =>
+  value
+    .trim()
+    .replace(/^"(.*)"$/s, "$1")
+    .replace(/\\n/g, "\n");
+
 function getFirebaseAdminApp() {
   if (!hasRequiredFirebaseAdminConfig()) {
     return null;
@@ -23,7 +29,7 @@ function getFirebaseAdminApp() {
     credential: cert({
       projectId: FIREBASE_PROJECT_ID,
       clientEmail: FIREBASE_CLIENT_EMAIL,
-      privateKey: FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      privateKey: normalizePrivateKey(FIREBASE_PRIVATE_KEY as string),
     }),
   });
 }
