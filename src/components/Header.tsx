@@ -8,6 +8,8 @@ import { getToken } from "firebase/messaging";
 
 import { getFirebaseMessagingClient } from "@/lib/firebase-client";
 
+const FCM_TOKEN_STORAGE_KEY = "fcm_registration_token";
+
 export type HeaderProps = {
   session: Session | null;
   status: "loading" | "authenticated" | "unauthenticated";
@@ -17,6 +19,9 @@ export default function Header({ session, status }: HeaderProps) {
   const isLoading = status === "loading";
   const isAuthenticated = status === "authenticated" && session?.user;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("unsupported");
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -31,6 +36,14 @@ export default function Header({ session, status }: HeaderProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+    setNotificationPermission(Notification.permission);
+  }, []);
 
   const deleteCurrentFcmToken = async () => {
     if (
@@ -72,6 +85,63 @@ export default function Header({ session, status }: HeaderProps) {
     }
   };
 
+  const enablePushNotification = async () => {
+    if (
+      !("Notification" in window) ||
+      !("serviceWorker" in navigator) ||
+      !process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+    ) {
+      return;
+    }
+
+    try {
+      const permission =
+        Notification.permission === "default"
+          ? await Notification.requestPermission()
+          : Notification.permission;
+
+      setNotificationPermission(permission);
+      if (permission !== "granted") {
+        return;
+      }
+
+      const messaging = await getFirebaseMessagingClient();
+      if (!messaging) {
+        return;
+      }
+
+      await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      const registration = await navigator.serviceWorker.ready;
+      const token = await getToken(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+        serviceWorkerRegistration: registration,
+      });
+
+      if (!token) {
+        return;
+      }
+
+      const response = await fetch("/api/notifications/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          platform: navigator.userAgent,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to save FCM token", await response.text());
+        return;
+      }
+
+      localStorage.setItem(FCM_TOKEN_STORAGE_KEY, token);
+      console.info("Push通知を有効化しました。");
+    } catch (error) {
+      console.error("Failed to enable push notification", error);
+    }
+  };
+
   return (
     <header className="pointer-events-auto absolute left-6 right-6 top-6 z-[3000] flex items-center justify-between">
       <h1 className="rounded-full bg-black/70 p-4 text-xl font-semibold text-white shadow-lg backdrop-blur">
@@ -104,6 +174,18 @@ export default function Header({ session, status }: HeaderProps) {
                 >
                   マイページ
                 </Link>
+                {notificationPermission !== "unsupported" &&
+                  notificationPermission !== "granted" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void enablePushNotification();
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-white/10"
+                    >
+                      通知を有効化
+                    </button>
+                  )}
                 <button
                   type="button"
                   onClick={async () => {

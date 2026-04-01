@@ -72,14 +72,7 @@ export default function Providers({ session, children }: ProvidersProps) {
 
     const registerFcmToken = async () => {
       try {
-        const permission =
-          Notification.permission === "granted"
-            ? "granted"
-            : Notification.permission === "default"
-            ? await Notification.requestPermission()
-            : Notification.permission;
-
-        if (permission !== "granted") {
+        if (Notification.permission !== "granted") {
           return;
         }
 
