@@ -4,6 +4,9 @@ import Link from "next/link";
 import type { Session } from "next-auth";
 import { useEffect, useRef, useState } from "react";
 import { signIn, signOut } from "next-auth/react";
+import { getToken } from "firebase/messaging";
+
+import { getFirebaseMessagingClient } from "@/lib/firebase-client";
 
 export type HeaderProps = {
   session: Session | null;
@@ -28,6 +31,46 @@ export default function Header({ session, status }: HeaderProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
+
+  const deleteCurrentFcmToken = async () => {
+    if (
+      !("serviceWorker" in navigator) ||
+      !process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+    ) {
+      return;
+    }
+
+    try {
+      const messaging = await getFirebaseMessagingClient();
+      if (!messaging) {
+        return;
+      }
+
+      await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      const registration = await navigator.serviceWorker.ready;
+
+      const token = await getToken(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+        serviceWorkerRegistration: registration,
+      });
+
+      if (!token) {
+        return;
+      }
+
+      const response = await fetch("/api/notifications/token", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to delete FCM token", await response.text());
+      }
+    } catch (error) {
+      console.error("Failed to delete current FCM token", error);
+    }
+  };
 
   return (
     <header className="pointer-events-auto absolute left-6 right-6 top-6 z-[3000] flex items-center justify-between">
@@ -63,9 +106,10 @@ export default function Header({ session, status }: HeaderProps) {
                 </Link>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     setIsMenuOpen(false);
-                    void signOut({ callbackUrl: "/" });
+                    await deleteCurrentFcmToken();
+                    await signOut({ callbackUrl: "/" });
                   }}
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-white/10"
                 >

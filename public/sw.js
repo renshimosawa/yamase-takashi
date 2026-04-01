@@ -110,3 +110,105 @@ function cacheFirst(request, cacheName) {
     })
   );
 }
+
+self.addEventListener("push", (event) => {
+  const fallbackTitle = "新しい投稿があります";
+  const fallbackBody = "アプリを開いて最新の投稿を確認してください。";
+
+  let payload = null;
+  let rawText = "";
+
+  if (event.data) {
+    try {
+      payload = event.data.json();
+    } catch (error) {
+      try {
+        rawText = event.data.text();
+      } catch (textError) {
+        console.error("Failed to read push payload", textError);
+      }
+      console.error("Failed to parse push payload as JSON", error);
+    }
+  }
+
+  let normalized = payload ?? {};
+  const fcmMessage =
+    normalized &&
+    typeof normalized === "object" &&
+    normalized.data &&
+    typeof normalized.data === "object" &&
+    normalized.data.FCM_MSG &&
+    typeof normalized.data.FCM_MSG === "string"
+      ? normalized.data.FCM_MSG
+      : null;
+
+  if (fcmMessage) {
+    try {
+      normalized = JSON.parse(fcmMessage);
+    } catch (error) {
+      console.error("Failed to parse nested FCM_MSG payload", error);
+    }
+  }
+
+  const notification =
+    normalized && typeof normalized === "object" ? normalized.notification : null;
+  const data = normalized && typeof normalized === "object" ? normalized.data : null;
+  const link =
+    (data && typeof data === "object" && data.link) ||
+    (normalized &&
+      typeof normalized === "object" &&
+      normalized.fcmOptions &&
+      typeof normalized.fcmOptions === "object" &&
+      normalized.fcmOptions.link) ||
+    "/";
+
+  const title =
+    (notification && notification.title) ||
+    (data && typeof data === "object" && data.title) ||
+    fallbackTitle;
+  const body =
+    (notification && notification.body) ||
+    (data && typeof data === "object" && data.body) ||
+    rawText ||
+    fallbackBody;
+  const icon =
+    (notification && notification.icon) ||
+    (data && typeof data === "object" && data.icon) ||
+    "/favicon.png";
+  const badge =
+    (notification && notification.badge) ||
+    (data && typeof data === "object" && data.badge) ||
+    "/favicon.png";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon,
+      badge,
+      data: { link },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const link = event.notification?.data?.link || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) {
+          client.focus();
+          if ("navigate" in client) {
+            client.navigate(link);
+          }
+          return;
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(link);
+      }
+      return undefined;
+    })
+  );
+});
