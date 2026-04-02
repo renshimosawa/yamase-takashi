@@ -6,7 +6,6 @@ import type { Session } from "next-auth";
 import { getSession, signIn } from "next-auth/react";
 
 import Header from "@/components/Header";
-import IosPwaGuideBanner from "@/components/IosPwaGuideBanner";
 import {
   NEUTRAL_SMELL_EMOJI,
   SMELL_TYPE_LABELS,
@@ -26,6 +25,56 @@ type MapPost = {
 };
 
 type FetchState = "idle" | "loading" | "success" | "error";
+type PwaGuidePlatform = "ios" | "android" | null;
+
+function isStandaloneMode() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  const mediaStandalone = window.matchMedia("(display-mode: standalone)").matches;
+  const navigatorStandalone =
+    typeof (window.navigator as Navigator & { standalone?: boolean }).standalone ===
+      "boolean" &&
+    Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+
+  return mediaStandalone || navigatorStandalone;
+}
+
+function detectPwaGuidePlatform(): PwaGuidePlatform {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const isDesktopViewport = window.matchMedia("(min-width: 1024px)").matches;
+  if (isDesktopViewport || isStandaloneMode()) {
+    return null;
+  }
+
+  const ua = navigator.userAgent;
+  const platform = navigator.platform;
+  const maxTouchPoints = navigator.maxTouchPoints ?? 0;
+
+  const isIosDevice =
+    /iPhone|iPad|iPod/i.test(ua) ||
+    (platform === "MacIntel" && maxTouchPoints > 1);
+  const isSafari =
+    /Safari/i.test(ua) &&
+    !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|DuckDuckGo/i.test(ua);
+  if (isIosDevice && isSafari) {
+    if ("Notification" in window && Notification.permission === "granted") {
+      return null;
+    }
+    return "ios";
+  }
+
+  const isAndroid = /Android/i.test(ua);
+  const isChrome = /Chrome/i.test(ua) && !/EdgA|OPR|SamsungBrowser/i.test(ua);
+  if (isAndroid && isChrome) {
+    return "android";
+  }
+
+  return null;
+}
 
 export default function MyPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -37,6 +86,7 @@ export default function MyPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [pwaGuidePlatform, setPwaGuidePlatform] = useState<PwaGuidePlatform>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,6 +154,10 @@ export default function MyPage() {
     void loadPosts();
   }, [authStatus, loadPosts]);
 
+  useEffect(() => {
+    setPwaGuidePlatform(detectPwaGuidePlatform());
+  }, []);
+
   const handleDelete = useCallback(
     async (postId: string) => {
       if (!postId || deletingId) {
@@ -168,8 +222,41 @@ export default function MyPage() {
   return (
     <div className="relative min-h-[100svh] w-screen bg-gradient-to-br from-[#111827] via-[#0f172a] to-[#1f2937] text-white">
       <Header session={session} status={authStatus} />
-      <IosPwaGuideBanner />
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-16 pt-28 sm:px-8">
+        <div className="flex items-center">
+          <Link
+            href="/"
+            className="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-400/20 px-4 py-2 text-sm font-semibold text-cyan-50 shadow-lg backdrop-blur transition hover:bg-cyan-300/30"
+          >
+            ← 地図へ戻る
+          </Link>
+        </div>
+        {pwaGuidePlatform && (
+          <section className="rounded-2xl border border-amber-200/40 bg-amber-500/10 p-4 shadow-lg">
+            <h3 className="text-sm font-semibold text-amber-100">
+              {pwaGuidePlatform === "android"
+                ? "Androidで快適に使うには、ホーム画面への追加がおすすめです。"
+                : "iPhoneで通知を受け取るには、ホーム画面への追加が必要です。"}
+            </h3>
+            <ol className="mt-2 space-y-1 text-xs text-amber-50/90">
+              {pwaGuidePlatform === "android" ? (
+                <>
+                  <li>1. Chromeでこのサイトを開く</li>
+                  <li>2. 右上メニュー（︙）をタップ</li>
+                  <li>3. 「ホーム画面に追加」または「アプリをインストール」を選択</li>
+                  <li>4. ホーム画面のアイコンから起動</li>
+                </>
+              ) : (
+                <>
+                  <li>1. Safariでこのサイトを開き、下部の共有ボタンをタップ</li>
+                  <li>2. 「ホーム画面に追加」を選択</li>
+                  <li>3. ホーム画面のアイコンからアプリを起動</li>
+                  <li>4. 右上メニューの「通知を有効化」をタップ</li>
+                </>
+              )}
+            </ol>
+          </section>
+        )}
         <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -179,12 +266,6 @@ export default function MyPage() {
               <p className="text-sm text-white/70">{headerMessage}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/"
-                className="rounded-full border border-white/20 px-4 py-2 text-sm text-white transition hover:border-white/40 hover:bg-white/10"
-              >
-                地図に戻る
-              </Link>
               {isAuthenticated && (
                 <button
                   type="button"
