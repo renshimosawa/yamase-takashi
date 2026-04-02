@@ -411,13 +411,11 @@ export default function MyPage() {
           </section>
         )}
 
-        <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
+        <h1 className="text-xl font-semibold tracking-wide">マイページ</h1>
+        <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold tracking-wide">
-                マイページ
-              </h2>
-              <p className="text-sm text-white/70">{headerMessage}</p>
+              <p className="text-base text-white">{headerMessage}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {isAuthenticated && (
@@ -481,7 +479,7 @@ export default function MyPage() {
                 return (
                   <article
                     key={post.id}
-                    className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur transition hover:border-white/20"
+                    className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-xl backdrop-blur transition hover:border-white/20"
                   >
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -499,11 +497,8 @@ export default function MyPage() {
                         <div className="flex flex-col">
                           <span className="text-sm font-semibold text-white/80">
                             {isNeutral
-                              ? "においレベル 0 (絵文字ピン)"
+                              ? "においレベル 0"
                               : smellLabel ?? "においタイプ未設定"}
-                          </span>
-                          <span className="text-xs text-white/60">
-                            Lv.{post.intensity ?? "-"}
                           </span>
                         </div>
                       </div>
@@ -540,8 +535,9 @@ export default function MyPage() {
           )}
         </div>
 
+        <h2 className="text-lg font-bold text-white">設定</h2>
         <section className="rounded-2xl border border-white/15 bg-white/5 p-4 shadow-lg">
-          <h3 className="text-sm font-semibold text-white">通知設定</h3>
+          <p className="font-bold text-white">投稿通知</p>
           <p className="mt-1 text-xs text-white/70">
             現在の権限:{" "}
             {notificationPermission === "unsupported"
@@ -578,8 +574,7 @@ export default function MyPage() {
         </section>
 
         {isAuthenticated && (
-          <section className="p-1">
-            <h3 className="text-sm font-semibold text-white/90">アカウント</h3>
+          <section className=" flex justify-center">
             <button
               type="button"
               onClick={() => void signOut({ callbackUrl: "/" })}
@@ -590,18 +585,12 @@ export default function MyPage() {
           </section>
         )}
 
-        <section className="p-1">
-          <h3 className="text-sm font-semibold text-white/90">
-            不具合報告・機能改善のご提案
-          </h3>
-          <p className="mt-1 text-xs text-white/70">
-            気づいた点があれば、フォームからお気軽にお知らせください。
-          </p>
+        <section className="flex justify-center">
           <Link
             href="/feedback"
-            className="mt-3 inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-400/20 px-4 py-2 text-xs font-semibold text-cyan-50 shadow backdrop-blur transition hover:bg-cyan-300/30"
+            className="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-400/20 px-4 py-2 text-xs font-semibold text-cyan-50 shadow backdrop-blur transition hover:bg-cyan-300/30"
           >
-            フォームページを開く
+            フィードバック
           </Link>
         </section>
       </main>

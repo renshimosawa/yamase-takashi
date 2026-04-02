@@ -374,9 +374,6 @@ export default function PostForm({
               デフォルトに戻す
             </button>
           </div>
-          <p className="mt-1 text-[11px] text-white/60">
-            Slack のような絵文字ピッカーから好きなアイコンを選べます。
-          </p>
           {isEmojiPickerOpen && (
             <div className="absolute top-0 left-0 z-[2000] mt-3 w-[min(320px,90vw)]">
               <EmojiPicker onSelect={handleEmojiSelect} />
@@ -386,7 +383,7 @@ export default function PostForm({
       )}
 
       <label className="text-xs uppercase tracking-[0.2em] text-white/60">
-        自由入力 (50文字以内)
+        自由入力
       </label>
       <textarea
         value={form.description}
