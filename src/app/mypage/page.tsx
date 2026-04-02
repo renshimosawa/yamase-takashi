@@ -6,6 +6,7 @@ import type { Session } from "next-auth";
 import { getSession, signIn } from "next-auth/react";
 
 import Header from "@/components/Header";
+import IosPwaGuideBanner from "@/components/IosPwaGuideBanner";
 import {
   NEUTRAL_SMELL_EMOJI,
   SMELL_TYPE_LABELS,
@@ -167,6 +168,7 @@ export default function MyPage() {
   return (
     <div className="relative min-h-[100svh] w-screen bg-gradient-to-br from-[#111827] via-[#0f172a] to-[#1f2937] text-white">
       <Header session={session} status={authStatus} />
+      <IosPwaGuideBanner />
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-16 pt-28 sm:px-8">
         <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-4">

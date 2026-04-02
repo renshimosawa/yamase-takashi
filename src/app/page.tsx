@@ -9,6 +9,7 @@ import { getSession } from "next-auth/react";
 
 import { fetchCurrentTemperature, fetchHachinoheForecast } from "@/lib/weather";
 import Header from "@/components/Header";
+import IosPwaGuideBanner from "@/components/IosPwaGuideBanner";
 import FloatingPostButton from "@/components/FloatingPostButton";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import WeatherCircle from "@/components/WeatherCircle";
@@ -271,6 +272,7 @@ export default function Home() {
         <OpenStreetMap posts={posts} onMarkerSelect={setSelectedGroup} />
       </div>
       <Header session={session} status={authStatus} />
+      <IosPwaGuideBanner />
       <aside className="pointer-events-none absolute left-6 top-32 z-[1000] flex flex-col gap-4">
         <WeatherCircle
           icon={weatherCard.weather}
