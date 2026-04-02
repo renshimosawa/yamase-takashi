@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "next-auth";
-import { getSession, signIn } from "next-auth/react";
+import { getSession, signIn, signOut } from "next-auth/react";
+import { getToken } from "firebase/messaging";
 
 import Header from "@/components/Header";
+import { getFirebaseMessagingClient } from "@/lib/firebase-client";
 import {
   NEUTRAL_SMELL_EMOJI,
   SMELL_TYPE_LABELS,
   getSmellIconPath,
   type SmellType,
 } from "@/constants/smell";
+
+const FCM_TOKEN_STORAGE_KEY = "fcm_registration_token";
 
 type MapPost = {
   id: string;
@@ -31,11 +35,15 @@ function isStandaloneMode() {
   if (typeof window === "undefined") {
     return false;
   }
-  const mediaStandalone = window.matchMedia("(display-mode: standalone)").matches;
+  const mediaStandalone = window.matchMedia(
+    "(display-mode: standalone)"
+  ).matches;
   const navigatorStandalone =
-    typeof (window.navigator as Navigator & { standalone?: boolean }).standalone ===
-      "boolean" &&
-    Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+    typeof (window.navigator as Navigator & { standalone?: boolean })
+      .standalone === "boolean" &&
+    Boolean(
+      (window.navigator as Navigator & { standalone?: boolean }).standalone
+    );
 
   return mediaStandalone || navigatorStandalone;
 }
@@ -86,7 +94,17 @@ export default function MyPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [pwaGuidePlatform, setPwaGuidePlatform] = useState<PwaGuidePlatform>(null);
+  const [pwaGuidePlatform, setPwaGuidePlatform] =
+    useState<PwaGuidePlatform>(null);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("unsupported");
+  const [isNotificationRegistered, setIsNotificationRegistered] =
+    useState(false);
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(
+    null
+  );
+  const [isUpdatingNotification, setIsUpdatingNotification] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -157,6 +175,139 @@ export default function MyPage() {
   useEffect(() => {
     setPwaGuidePlatform(detectPwaGuidePlatform());
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (!("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      setIsNotificationRegistered(false);
+      return;
+    }
+    setNotificationPermission(Notification.permission);
+    setIsNotificationRegistered(
+      Boolean(localStorage.getItem(FCM_TOKEN_STORAGE_KEY))
+    );
+  }, [authStatus, session?.user?.id]);
+
+  const enableNotification = useCallback(async () => {
+    if (!session?.user?.id) {
+      setNotificationMessage("通知設定にはログインが必要です。");
+      return;
+    }
+
+    if (
+      !("Notification" in window) ||
+      !("serviceWorker" in navigator) ||
+      !process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+    ) {
+      setNotificationMessage("この環境では通知設定を利用できません。");
+      return;
+    }
+
+    setIsUpdatingNotification(true);
+    setNotificationMessage(null);
+    try {
+      const permission =
+        Notification.permission === "default"
+          ? await Notification.requestPermission()
+          : Notification.permission;
+
+      setNotificationPermission(permission);
+      if (permission !== "granted") {
+        setNotificationMessage(
+          "通知が許可されていません。ブラウザ設定をご確認ください。"
+        );
+        return;
+      }
+
+      const messaging = await getFirebaseMessagingClient();
+      if (!messaging) {
+        setNotificationMessage("通知機能の初期化に失敗しました。");
+        return;
+      }
+
+      await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      const registration = await navigator.serviceWorker.ready;
+      const token = await getToken(messaging, {
+        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+        serviceWorkerRegistration: registration,
+      });
+
+      if (!token) {
+        setNotificationMessage("通知トークンの取得に失敗しました。");
+        return;
+      }
+
+      const response = await fetch("/api/notifications/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          platform: navigator.userAgent,
+        }),
+      });
+
+      if (!response.ok) {
+        setNotificationMessage("通知設定の保存に失敗しました。");
+        return;
+      }
+
+      localStorage.setItem(FCM_TOKEN_STORAGE_KEY, token);
+      setIsNotificationRegistered(true);
+      setNotificationMessage("通知を有効化しました。");
+    } catch (error) {
+      console.error("Failed to enable notification in mypage", error);
+      setNotificationMessage("通知設定の更新中にエラーが発生しました。");
+    } finally {
+      setIsUpdatingNotification(false);
+    }
+  }, [session?.user?.id]);
+
+  const disableNotification = useCallback(async () => {
+    if (!session?.user?.id) {
+      setNotificationMessage("通知設定にはログインが必要です。");
+      return;
+    }
+
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem(FCM_TOKEN_STORAGE_KEY)
+        : null;
+
+    if (!token) {
+      setIsNotificationRegistered(false);
+      setNotificationMessage("この端末の通知配信は停止済みです。");
+      return;
+    }
+
+    setIsUpdatingNotification(true);
+    setNotificationMessage(null);
+    try {
+      const response = await fetch("/api/notifications/token", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        setNotificationMessage("通知停止の反映に失敗しました。");
+        return;
+      }
+
+      localStorage.removeItem(FCM_TOKEN_STORAGE_KEY);
+      setIsNotificationRegistered(false);
+      setNotificationMessage(
+        "この端末への通知配信を停止しました。権限自体はブラウザ設定でOFFにできます。"
+      );
+    } catch (error) {
+      console.error("Failed to disable notification in mypage", error);
+      setNotificationMessage("通知停止中にエラーが発生しました。");
+    } finally {
+      setIsUpdatingNotification(false);
+    }
+  }, [session?.user?.id]);
 
   const handleDelete = useCallback(
     async (postId: string) => {
@@ -243,7 +394,9 @@ export default function MyPage() {
                 <>
                   <li>1. Chromeでこのサイトを開く</li>
                   <li>2. 右上メニュー（︙）をタップ</li>
-                  <li>3. 「ホーム画面に追加」または「アプリをインストール」を選択</li>
+                  <li>
+                    3. 「ホーム画面に追加」または「アプリをインストール」を選択
+                  </li>
                   <li>4. ホーム画面のアイコンから起動</li>
                 </>
               ) : (
@@ -257,6 +410,7 @@ export default function MyPage() {
             </ol>
           </section>
         )}
+
         <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -288,100 +442,168 @@ export default function MyPage() {
               {fetchError}
             </p>
           )}
-        </div>
+          {!isAuthenticated ? (
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-xl backdrop-blur">
+              <p className="mb-4 text-sm text-white/70">
+                ログインすると今日の投稿を確認・削除できます。
+              </p>
+              <button
+                type="button"
+                onClick={() => signIn("google")}
+                className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+              >
+                Googleでサインイン
+              </button>
+            </div>
+          ) : isLoading ? (
+            <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl backdrop-blur">
+              <p className="text-sm text-white/70">読み込み中です...</p>
+            </div>
+          ) : !hasPosts ? (
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-xl backdrop-blur">
+              <p className="text-sm text-white/70">
+                本日の投稿はまだありません。地図から投稿してみましょう。
+              </p>
+            </div>
+          ) : (
+            <section className="grid gap-4">
+              {posts.map((post) => {
+                const isNeutral = post.intensity === 0;
+                const icon = isNeutral
+                  ? post.emoji ?? NEUTRAL_SMELL_EMOJI
+                  : null;
+                const smellLabel =
+                  post.smell_type && SMELL_TYPE_LABELS[post.smell_type];
+                const formattedDate = post.inserted_at
+                  ? new Date(post.inserted_at).toLocaleString("ja-JP")
+                  : null;
 
-        {!isAuthenticated ? (
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-xl backdrop-blur">
-            <p className="mb-4 text-sm text-white/70">
-              ログインすると今日の投稿を確認・削除できます。
-            </p>
-            <button
-              type="button"
-              onClick={() => signIn("google")}
-              className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
-            >
-              Googleでサインイン
-            </button>
-          </div>
-        ) : isLoading ? (
-          <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl backdrop-blur">
-            <p className="text-sm text-white/70">読み込み中です...</p>
-          </div>
-        ) : !hasPosts ? (
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-xl backdrop-blur">
-            <p className="text-sm text-white/70">
-              本日の投稿はまだありません。地図から投稿してみましょう。
-            </p>
-          </div>
-        ) : (
-          <section className="grid gap-4">
-            {posts.map((post) => {
-              const isNeutral = post.intensity === 0;
-              const icon = isNeutral ? post.emoji ?? NEUTRAL_SMELL_EMOJI : null;
-              const smellLabel =
-                post.smell_type && SMELL_TYPE_LABELS[post.smell_type];
-              const formattedDate = post.inserted_at
-                ? new Date(post.inserted_at).toLocaleString("ja-JP")
-                : null;
-
-              return (
-                <article
-                  key={post.id}
-                  className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur transition hover:border-white/20"
-                >
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-3xl">
-                        {isNeutral ? (
-                          icon
-                        ) : (
-                          <img
-                            src={getSmellIconPath(post.smell_type ?? "hoya")}
-                            alt={smellLabel ?? "においタイプ"}
-                            className="h-9 w-9 rounded-full border border-white/20 bg-black/20 object-contain p-1"
-                          />
+                return (
+                  <article
+                    key={post.id}
+                    className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur transition hover:border-white/20"
+                  >
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-3xl">
+                          {isNeutral ? (
+                            icon
+                          ) : (
+                            <img
+                              src={getSmellIconPath(post.smell_type ?? "hoya")}
+                              alt={smellLabel ?? "においタイプ"}
+                              className="h-9 w-9 rounded-full border border-white/20 bg-black/20 object-contain p-1"
+                            />
+                          )}
+                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-white/80">
+                            {isNeutral
+                              ? "においレベル 0 (絵文字ピン)"
+                              : smellLabel ?? "においタイプ未設定"}
+                          </span>
+                          <span className="text-xs text-white/60">
+                            Lv.{post.intensity ?? "-"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleDelete(post.id)}
+                        disabled={deletingId === post.id}
+                        className="rounded-full border border-red-400/40 px-4 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300/70 hover:bg-red-300/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {deletingId === post.id ? "削除中..." : "削除する"}
+                      </button>
+                    </div>
+                    <div className="space-y-3 text-sm text-white/80">
+                      <p className="whitespace-pre-wrap rounded-2xl bg-black/30 p-4 text-white">
+                        {post.description}
+                      </p>
+                      <div className="grid gap-2 text-xs text-white/60 sm:grid-cols-2">
+                        {formattedDate && (
+                          <span>投稿日時: {formattedDate}</span>
                         )}
-                      </span>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-white/80">
-                          {isNeutral
-                            ? "においレベル 0 (絵文字ピン)"
-                            : smellLabel ?? "においタイプ未設定"}
-                        </span>
-                        <span className="text-xs text-white/60">
-                          Lv.{post.intensity ?? "-"}
-                        </span>
+                        {typeof post.latitude === "number" &&
+                          typeof post.longitude === "number" && (
+                            <span>
+                              緯度: {post.latitude.toFixed(4)}｜経度:{" "}
+                              {post.longitude.toFixed(4)}
+                            </span>
+                          )}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete(post.id)}
-                      disabled={deletingId === post.id}
-                      className="rounded-full border border-red-400/40 px-4 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300/70 hover:bg-red-300/20 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {deletingId === post.id ? "削除中..." : "削除する"}
-                    </button>
-                  </div>
-                  <div className="space-y-3 text-sm text-white/80">
-                    <p className="whitespace-pre-wrap rounded-2xl bg-black/30 p-4 text-white">
-                      {post.description}
-                    </p>
-                    <div className="grid gap-2 text-xs text-white/60 sm:grid-cols-2">
-                      {formattedDate && <span>投稿日時: {formattedDate}</span>}
-                      {typeof post.latitude === "number" &&
-                        typeof post.longitude === "number" && (
-                          <span>
-                            緯度: {post.latitude.toFixed(4)}｜経度:{" "}
-                            {post.longitude.toFixed(4)}
-                          </span>
-                        )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+                  </article>
+                );
+              })}
+            </section>
+          )}
+        </div>
+
+        <section className="rounded-2xl border border-white/15 bg-white/5 p-4 shadow-lg">
+          <h3 className="text-sm font-semibold text-white">通知設定</h3>
+          <p className="mt-1 text-xs text-white/70">
+            現在の権限:{" "}
+            {notificationPermission === "unsupported"
+              ? "この端末では未対応"
+              : notificationPermission === "granted"
+              ? "許可"
+              : notificationPermission === "denied"
+              ? "拒否"
+              : "未設定"}
+            {" / "}
+            配信状態: {isNotificationRegistered ? "ON" : "OFF"}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void enableNotification()}
+              disabled={isUpdatingNotification || !isAuthenticated}
+              className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isUpdatingNotification ? "更新中..." : "通知をONにする"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void disableNotification()}
+              disabled={isUpdatingNotification || !isAuthenticated}
+              className="rounded-full border border-white/30 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              この端末の通知をOFFにする
+            </button>
+          </div>
+          {notificationMessage && (
+            <p className="mt-2 text-xs text-white/70">{notificationMessage}</p>
+          )}
+        </section>
+
+        {isAuthenticated && (
+          <section className="p-1">
+            <h3 className="text-sm font-semibold text-white/90">アカウント</h3>
+            <button
+              type="button"
+              onClick={() => void signOut({ callbackUrl: "/" })}
+              className="mt-3 inline-flex items-center rounded-full border border-red-300/60 bg-red-400/15 px-4 py-2 text-xs font-semibold text-red-100 shadow backdrop-blur transition hover:bg-red-300/25"
+            >
+              サインアウト
+            </button>
           </section>
         )}
+
+        <section className="p-1">
+          <h3 className="text-sm font-semibold text-white/90">
+            不具合報告・機能改善のご提案
+          </h3>
+          <p className="mt-1 text-xs text-white/70">
+            気づいた点があれば、フォームからお気軽にお知らせください。
+          </p>
+          <Link
+            href="/feedback"
+            className="mt-3 inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-400/20 px-4 py-2 text-xs font-semibold text-cyan-50 shadow backdrop-blur transition hover:bg-cyan-300/30"
+          >
+            フォームページを開く
+          </Link>
+        </section>
       </main>
     </div>
   );

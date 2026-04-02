@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Session } from "next-auth";
 import { useEffect, useRef, useState } from "react";
-import { signIn, signOut } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { getToken } from "firebase/messaging";
 
 import { getFirebaseMessagingClient } from "@/lib/firebase-client";
@@ -44,46 +44,6 @@ export default function Header({ session, status }: HeaderProps) {
     }
     setNotificationPermission(Notification.permission);
   }, []);
-
-  const deleteCurrentFcmToken = async () => {
-    if (
-      !("serviceWorker" in navigator) ||
-      !process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
-    ) {
-      return;
-    }
-
-    try {
-      const messaging = await getFirebaseMessagingClient();
-      if (!messaging) {
-        return;
-      }
-
-      await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-      const registration = await navigator.serviceWorker.ready;
-
-      const token = await getToken(messaging, {
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-        serviceWorkerRegistration: registration,
-      });
-
-      if (!token) {
-        return;
-      }
-
-      const response = await fetch("/api/notifications/token", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-
-      if (!response.ok) {
-        console.error("Failed to delete FCM token", await response.text());
-      }
-    } catch (error) {
-      console.error("Failed to delete current FCM token", error);
-    }
-  };
 
   const enablePushNotification = async () => {
     if (
@@ -186,17 +146,6 @@ export default function Header({ session, status }: HeaderProps) {
                       通知を有効化
                     </button>
                   )}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setIsMenuOpen(false);
-                    await deleteCurrentFcmToken();
-                    await signOut({ callbackUrl: "/" });
-                  }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-white/10"
-                >
-                  サインアウト
-                </button>
               </div>
             )}
           </div>
