@@ -20,7 +20,7 @@ export default function PostDetailSheet({
   if (!group) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[1500] flex items-end justify-center pb-0">
+    <div className="pointer-events-none fixed inset-0 z-[4500] flex items-end justify-center pb-0">
       <div className="pointer-events-auto w-full max-w-2xl max-h-[95vh] translate-y-0 rounded-t-3xl bg-white text-slate-900 shadow-2xl">
         <div className="flex h-full flex-col">
           <div className="flex items-start justify-between px-6 pt-6 pb-4">
@@ -100,11 +100,11 @@ export default function PostDetailSheet({
                   alt="ad_secTitle"
                   className="w-[360px] mx-auto md:w-[310px]"
                 />
-                {/* <img
-                  src="demo_ad.png"
-                  alt=""
-                  className="w-[360px] mx-auto md:w-[270px]"
-                /> */}
+                <p className="text-center text-3xl font-bold text-blue-800">
+                  ここに広告を
+                  <br />
+                  出しませんか？
+                </p>
                 <div className="w-[360px] h-[100px] mx-auto md:w-[270px]"></div>
               </div>
               <img src="ad_secBG.png" alt="" className="relative z-10" />
