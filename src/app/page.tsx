@@ -293,7 +293,7 @@ export default function Home() {
       <div className="pointer-events-auto absolute right-6 top-32 z-[1000]">
         <RefreshButton onRefresh={refreshAllData} isLoading={isRefreshing} />
       </div>
-      <div className="w-full pointer-events-auto absolute bottom-8 left-0 z-[1100] px-4">
+      <div className="w-full pointer-events-auto absolute bottom-8 left-0 z-[4000] px-4">
         <FloatingPostButton
           onSubmitted={fetchPosts}
           isLoading={isLoadingPosts}

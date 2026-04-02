@@ -77,7 +77,7 @@ export default function FloatingPostButton({
       </button>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[1300] flex items-end justify-center p-4 sm:items-center sm:p-8"
+          className="fixed inset-0 z-[4000] flex items-end justify-center p-4 sm:items-center sm:p-8"
           role="dialog"
           aria-modal="true"
         >
