@@ -31,6 +31,8 @@ type TodayForecast = {
   wind: string;
 };
 
+const DOMAIN_NOTICE_DISMISSED_KEY = "domain_notice_dismissed_v1";
+
 const formatTemperature = (value: string | null) =>
   value !== null && value !== "" ? `${value}℃` : "--";
 
@@ -199,6 +201,17 @@ export default function Home() {
   const [selectedGroup, setSelectedGroup] = useState<MapPostGroup | null>(null);
   const [indicatorRefreshToken, setIndicatorRefreshToken] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDomainNotice, setShowDomainNotice] = useState(false);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem(DOMAIN_NOTICE_DISMISSED_KEY);
+    setShowDomainNotice(dismissed !== "1");
+  }, []);
+
+  const closeDomainNotice = () => {
+    localStorage.setItem(DOMAIN_NOTICE_DISMISSED_KEY, "1");
+    setShowDomainNotice(false);
+  };
 
   const fetchPosts = useCallback(async () => {
     setIsLoadingPosts(true);
@@ -272,8 +285,26 @@ export default function Home() {
         <OpenStreetMap posts={posts} onMarkerSelect={setSelectedGroup} />
       </div>
       <Header session={session} status={authStatus} />
+      {showDomainNotice && (
+        <div className="pointer-events-auto absolute left-6 right-6 top-24 z-[2900] flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-100/90 px-4 py-3 text-sm text-amber-950 shadow-lg backdrop-blur">
+          <p className="leading-relaxed">
+            ドメインが変更されたため、リダイレクトしています。<a href="https://yamasekun.vercel.app/" target="_blank" className="underline">
+              新ドメイン
+            </a>にアクセスし、
+            もう一度「ホーム画面に追加」をお願いします。
+          </p>
+          <button
+            type="button"
+            onClick={closeDomainNotice}
+            className="shrink-0 rounded-md border border-amber-400/70 bg-white/80 px-2 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white"
+            aria-label="お知らせを閉じる"
+          >
+            閉じる
+          </button>
+        </div>
+      )}
       <IosPwaGuideBanner />
-      <aside className="pointer-events-none absolute left-6 top-32 z-[1000] flex flex-col gap-4">
+      <aside className="pointer-events-none absolute left-6 top-48 z-[1000] flex flex-col gap-4">
         <WeatherCircle
           icon={weatherCard.weather}
           label="天気"
@@ -290,7 +321,7 @@ export default function Home() {
           tooltip={forecast?.wind ?? weatherCard.tooltip}
         />
       </aside>
-      <div className="pointer-events-auto absolute right-6 top-32 z-[1000]">
+      <div className="pointer-events-auto absolute right-6 top-48 z-[1000]">
         <RefreshButton onRefresh={refreshAllData} isLoading={isRefreshing} />
       </div>
       <div className="w-full pointer-events-auto absolute bottom-8 left-0 z-[4000] px-4">
