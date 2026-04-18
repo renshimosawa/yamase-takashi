@@ -13,7 +13,7 @@ const PRECACHE_URLS = [
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)),
   );
 });
 
@@ -26,11 +26,11 @@ self.addEventListener("activate", (event) => {
           cacheNames
             .filter(
               (cacheName) =>
-                cacheName !== STATIC_CACHE && cacheName !== RUNTIME_CACHE
+                cacheName !== STATIC_CACHE && cacheName !== RUNTIME_CACHE,
             )
-            .map((cacheName) => caches.delete(cacheName))
-        )
-      )
+            .map((cacheName) => caches.delete(cacheName)),
+        ),
+      ),
   );
   self.clients.claim();
 });
@@ -62,7 +62,7 @@ self.addEventListener("fetch", (event) => {
             return cached;
           }
           return caches.match("/offline.html");
-        })
+        }),
     );
     return;
   }
@@ -107,8 +107,25 @@ function cacheFirst(request, cacheName) {
         .catch(() => cachedResponse);
 
       return cachedResponse || fetchPromise;
-    })
+    }),
   );
+}
+
+function normalizeNotificationLink(rawLink) {
+  if (typeof rawLink !== "string" || rawLink.trim().length === 0) {
+    return "/";
+  }
+
+  try {
+    const normalizedUrl = new URL(rawLink, self.location.origin);
+    if (normalizedUrl.origin !== self.location.origin) {
+      return "/";
+    }
+
+    return `${normalizedUrl.pathname}${normalizedUrl.search}${normalizedUrl.hash}`;
+  } catch {
+    return "/";
+  }
 }
 
 self.addEventListener("push", (event) => {
@@ -151,9 +168,12 @@ self.addEventListener("push", (event) => {
   }
 
   const notification =
-    normalized && typeof normalized === "object" ? normalized.notification : null;
-  const data = normalized && typeof normalized === "object" ? normalized.data : null;
-  const link =
+    normalized && typeof normalized === "object"
+      ? normalized.notification
+      : null;
+  const data =
+    normalized && typeof normalized === "object" ? normalized.data : null;
+  const rawLink =
     (data && typeof data === "object" && data.link) ||
     (normalized &&
       typeof normalized === "object" &&
@@ -161,6 +181,7 @@ self.addEventListener("push", (event) => {
       typeof normalized.fcmOptions === "object" &&
       normalized.fcmOptions.link) ||
     "/";
+  const link = normalizeNotificationLink(rawLink);
 
   const title =
     (notification && notification.title) ||
@@ -186,29 +207,31 @@ self.addEventListener("push", (event) => {
       icon,
       badge,
       data: { link },
-    })
+    }),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const link = event.notification?.data?.link || "/";
+  const link = normalizeNotificationLink(event.notification?.data?.link || "/");
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if ("focus" in client) {
-          client.focus();
-          if ("navigate" in client) {
-            client.navigate(link);
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        for (const client of clients) {
+          if ("focus" in client) {
+            client.focus();
+            if ("navigate" in client) {
+              client.navigate(link);
+            }
+            return;
           }
-          return;
         }
-      }
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(link);
-      }
-      return undefined;
-    })
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(link);
+        }
+        return undefined;
+      }),
   );
 });

@@ -95,8 +95,8 @@ async function notifyNewPost(post: {
     new Set(
       ((data as FcmTokenRecord[] | null) ?? [])
         .map((row) => row.token?.trim())
-        .filter((value): value is string => Boolean(value))
-    )
+        .filter((value): value is string => Boolean(value)),
+    ),
   );
 
   if (tokens.length === 0) {
@@ -107,8 +107,8 @@ async function notifyNewPost(post: {
     post.intensity === 0
       ? "ニュートラル"
       : post.smellType
-      ? SMELL_TYPE_LABELS[post.smellType]
-      : "未選択";
+        ? SMELL_TYPE_LABELS[post.smellType]
+        : "未選択";
   const meta =
     post.intensity === 0
       ? `Lv0 ${post.emoji ?? NEUTRAL_SMELL_EMOJI}`
@@ -122,7 +122,7 @@ async function notifyNewPost(post: {
     },
     webpush: {
       fcmOptions: {
-        link: `${APP_ORIGIN}/`,
+        link: "/",
       },
       notification: {
         icon: `${APP_ORIGIN}/favicon.png`,
@@ -132,7 +132,7 @@ async function notifyNewPost(post: {
     data: {
       type: "new_post",
       insertedAt: post.insertedAt,
-      link: `${APP_ORIGIN}/`,
+      link: "/",
     },
   });
 
@@ -191,14 +191,14 @@ export async function POST(request: Request) {
     if (!description || description.trim().length === 0) {
       return NextResponse.json(
         { error: "自由入力欄を入力してください" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (description.length > 50) {
       return NextResponse.json(
         { error: "自由入力欄は50文字以内で入力してください" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -210,7 +210,7 @@ export async function POST(request: Request) {
     if (smell_type !== null && !isValidSmellType(smell_type)) {
       return NextResponse.json(
         { error: "においタイプが不正です" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -221,7 +221,7 @@ export async function POST(request: Request) {
       if (!smell_type) {
         return NextResponse.json(
           { error: "においタイプを選択してください" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -230,7 +230,7 @@ export async function POST(request: Request) {
       if (!sanitizedEmoji || !isValidNeutralSmellEmoji(sanitizedEmoji)) {
         return NextResponse.json(
           { error: "ピン用の絵文字が不正です" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -239,7 +239,7 @@ export async function POST(request: Request) {
       if (sanitizedEmoji) {
         console.warn(
           "Ignoring emoji for non-neutral post submission",
-          sanitizedEmoji
+          sanitizedEmoji,
         );
       }
     }
@@ -247,7 +247,7 @@ export async function POST(request: Request) {
     const storedSmellType = normalizedIntensity === 0 ? null : smell_type;
     const storedEmoji =
       normalizedIntensity === 0
-        ? sanitizedEmoji ?? NEUTRAL_SMELL_EMOJI
+        ? (sanitizedEmoji ?? NEUTRAL_SMELL_EMOJI)
         : null;
 
     const supabase = getSupabaseAdmin();
@@ -268,7 +268,7 @@ export async function POST(request: Request) {
       console.error("Failed to insert post", error);
       return NextResponse.json(
         { error: "投稿の保存中にエラーが発生しました" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -288,7 +288,7 @@ export async function POST(request: Request) {
     console.error("Unexpected error on POST /api/posts", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -312,7 +312,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("posts")
       .select(
-        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at"
+        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at",
       )
       .gte("inserted_at", start)
       .lte("inserted_at", end)
@@ -323,7 +323,7 @@ export async function GET() {
       console.error("Failed to fetch posts", error);
       return NextResponse.json(
         { error: "投稿の取得中にエラーが発生しました" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -332,7 +332,7 @@ export async function GET() {
     console.error("Unexpected error on GET /api/posts", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
