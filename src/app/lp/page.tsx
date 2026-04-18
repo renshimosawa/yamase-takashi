@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "LP | ヤマセ君の知らせ",
@@ -16,13 +18,24 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <main className="mx-auto flex min-h-[100svh] w-full max-w-4xl flex-col items-center justify-center px-6 py-20 text-center">
-      <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
-        ヤマセ君の知らせ
-      </h1>
-      <p className="mt-4 text-base text-gray-700 sm:text-lg">
-        青森の「ヤマセ」の気配をみんなで共有するサービスです。
-      </p>
+    <main className="">
+      <section className="flex justify-center items-center gap-8">
+        <div className="pl-5 pt-10">
+          <h1 className="text-5xl font-bold">ヤマセ君の知らせ</h1>
+          <p className="text-lg font-bold mt-2">
+            八戸のヤマセと暮らし、つながる。
+          </p>
+          <Link
+            href="/register"
+            className="mt-4 inline-block bg-cyan-800 text-white text-lg font-bold leading-none py-4 px-8 rounded-full hover:bg-cyan-600 duration-300"
+          >
+            使ってみる
+          </Link>
+        </div>
+        <div>
+          <Image src={"/yamasekun_base.png"} alt="" width={400} height={400} />
+        </div>
+      </section>
     </main>
   );
 }
