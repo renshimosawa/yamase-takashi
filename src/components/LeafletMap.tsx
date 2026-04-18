@@ -39,6 +39,8 @@ type LeafletMapProps = {
   zoom?: number;
   posts?: MapPost[];
   onMarkerSelect?: (group: MapPostGroup) => void;
+  followUserRequestToken?: number;
+  onGeolocationFixChange?: (hasFix: boolean) => void;
 };
 
 export default function LeafletMap({
@@ -46,9 +48,11 @@ export default function LeafletMap({
   zoom = 13,
   posts = [],
   onMarkerSelect,
+  followUserRequestToken,
+  onGeolocationFixChange,
 }: LeafletMapProps) {
   const [userPosition, setUserPosition] = useState<LatLngExpression | null>(
-    null
+    null,
   );
   const [hasGeolocationFix, setHasGeolocationFix] = useState(false);
   const [shouldFollowUser, setShouldFollowUser] = useState(true);
@@ -73,7 +77,7 @@ export default function LeafletMap({
           html: `<div class="marker-smell-pin"><img src="${iconPath}" alt="${SMELL_TYPE_LABELS[key]}" /></div>`,
           iconSize: [28, 28],
           iconAnchor: [14, 28],
-        })
+        }),
       );
     }
 
@@ -122,7 +126,7 @@ export default function LeafletMap({
           html: `<div class="stacked-smell-icons">${grid}</div>`,
           iconSize: [width, height],
           iconAnchor: [width / 2, height],
-        })
+        }),
       );
     }
 
@@ -149,15 +153,29 @@ export default function LeafletMap({
     };
   }, []);
 
+  useEffect(() => {
+    onGeolocationFixChange?.(hasGeolocationFix);
+  }, [hasGeolocationFix, onGeolocationFixChange]);
+
   const fallbackCenter = useMemo<LatLngExpression>(
     () => center ?? [40.5086, 141.4882],
-    [center]
+    [center],
   );
 
   const effectiveCenter = useMemo<LatLngExpression>(
     () => userPosition ?? fallbackCenter,
-    [userPosition, fallbackCenter]
+    [userPosition, fallbackCenter],
   );
+
+  useEffect(() => {
+    if (typeof followUserRequestToken !== "number") {
+      return;
+    }
+
+    if (userPosition) {
+      setShouldFollowUser(true);
+    }
+  }, [followUserRequestToken, userPosition]);
 
   const handleUserInteraction = useCallback(() => {
     setShouldFollowUser((prev) => (prev ? false : prev));
@@ -168,7 +186,7 @@ export default function LeafletMap({
       setShouldFollowUser(false);
       onMarkerSelect?.(group);
     },
-    [onMarkerSelect]
+    [onMarkerSelect],
   );
 
   const groupedMarkers = useMemo(() => {
@@ -230,8 +248,8 @@ export default function LeafletMap({
             post.intensity === 0
               ? [(post.emoji ?? NEUTRAL_SMELL_EMOJI) as SmellSummaryValue]
               : post.smell_type
-              ? [post.smell_type]
-              : [],
+                ? [post.smell_type]
+                : [],
         });
       }
     }
@@ -241,42 +259,6 @@ export default function LeafletMap({
 
   return (
     <div className="relative h-full w-full">
-      {hasGeolocationFix && (
-        <div className="pointer-events-none absolute top-[185px] right-[23px] z-[1000] flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              if (userPosition) {
-                setShouldFollowUser(true);
-              }
-            }}
-            className="pointer-events-auto rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 p-3 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 transform"
-            aria-label="現在地に戻る"
-            title="現在地に戻る"
-          >
-            <svg
-              className="w-5 h-5 text-gray-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
       <MapContainer
         center={effectiveCenter}
         zoom={zoom}
@@ -307,15 +289,15 @@ export default function LeafletMap({
             group.posts.length > 1 && group.smellSummary.length > 0
               ? getClusterIcon(group.smellSummary)
               : group.posts[0]?.intensity === 0
-              ? L.divIcon({
-                  className: "post-marker-icon",
-                  html: `<div class="marker-emoji-pin">${
-                    group.posts[0]?.emoji ?? NEUTRAL_SMELL_EMOJI
-                  }</div>`,
-                  iconSize: [32, 32],
-                  iconAnchor: [16, 32],
-                })
-              : getSmellIcon(group.posts[0]?.smell_type ?? undefined);
+                ? L.divIcon({
+                    className: "post-marker-icon",
+                    html: `<div class="marker-emoji-pin">${
+                      group.posts[0]?.emoji ?? NEUTRAL_SMELL_EMOJI
+                    }</div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32],
+                  })
+                : getSmellIcon(group.posts[0]?.smell_type ?? undefined);
 
           const icon =
             iconOption ??

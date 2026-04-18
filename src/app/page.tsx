@@ -21,7 +21,7 @@ const OpenStreetMap = dynamicImport(
   () => import("@/components/OpenStreetMap"),
   {
     ssr: false,
-  }
+  },
 );
 
 type TodayForecast = {
@@ -32,9 +32,6 @@ type TodayForecast = {
 };
 
 const DOMAIN_NOTICE_DISMISSED_KEY = "domain_notice_dismissed_v1";
-
-const formatTemperature = (value: string | null) =>
-  value !== null && value !== "" ? `${value}℃` : "--";
 
 const getWindDirectionArrow = (wind: string | null) => {
   if (!wind) return "";
@@ -82,7 +79,7 @@ export default function Home() {
       } catch (err) {
         if (!isMounted) return;
         setError(
-          err instanceof Error ? err.message : "天気情報の取得に失敗しました。"
+          err instanceof Error ? err.message : "天気情報の取得に失敗しました。",
         );
       } finally {
         if (isMounted) {
@@ -139,7 +136,7 @@ export default function Home() {
         setCurrentTemp(temp);
       } catch (err) {
         setTempError(
-          err instanceof Error ? err.message : "気温の取得に失敗しました。"
+          err instanceof Error ? err.message : "気温の取得に失敗しました。",
         );
       } finally {
         setIsLoadingTemp(false);
@@ -178,18 +175,18 @@ export default function Home() {
       weather: forecast.weather.includes("雨")
         ? "🌧️"
         : forecast.weather.includes("晴")
-        ? "☀️"
-        : "⛅",
+          ? "☀️"
+          : "⛅",
       temperatureLabel:
         currentTemp !== null
           ? `${currentTemp.toFixed(1)}℃`
           : isLoadingTemp
-          ? "取得中..."
-          : tempError ?? "--",
+            ? "取得中..."
+            : (tempError ?? "--"),
       temperatureTooltip:
         currentTemp !== null
           ? `現在気温: ${currentTemp.toFixed(1)}℃`
-          : tempError ?? "気温の取得に失敗しました。",
+          : (tempError ?? "気温の取得に失敗しました。"),
       wind: windArrow || "🧭",
       tooltip: `天気: ${forecast.weather}\n風向き: ${forecast.wind}`,
     } as const;
@@ -202,16 +199,13 @@ export default function Home() {
   const [indicatorRefreshToken, setIndicatorRefreshToken] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showDomainNotice, setShowDomainNotice] = useState(false);
+  const [followUserRequestToken, setFollowUserRequestToken] = useState(0);
+  const [hasGeolocationFix, setHasGeolocationFix] = useState(false);
 
   useEffect(() => {
     const dismissed = localStorage.getItem(DOMAIN_NOTICE_DISMISSED_KEY);
     setShowDomainNotice(dismissed !== "1");
   }, []);
-
-  const closeDomainNotice = () => {
-    localStorage.setItem(DOMAIN_NOTICE_DISMISSED_KEY, "1");
-    setShowDomainNotice(false);
-  };
 
   const fetchPosts = useCallback(async () => {
     setIsLoadingPosts(true);
@@ -233,7 +227,7 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to fetch posts", error);
       setPostError(
-        error instanceof Error ? error.message : "投稿の取得に失敗しました。"
+        error instanceof Error ? error.message : "投稿の取得に失敗しました。",
       );
     } finally {
       setIsLoadingPosts(false);
@@ -264,7 +258,7 @@ export default function Home() {
         setTempError(null);
       } catch (err) {
         setTempError(
-          err instanceof Error ? err.message : "気温の取得に失敗しました。"
+          err instanceof Error ? err.message : "気温の取得に失敗しました。",
         );
       }
 
@@ -272,7 +266,7 @@ export default function Home() {
       await fetchPosts();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "データの更新に失敗しました。"
+        err instanceof Error ? err.message : "データの更新に失敗しました。",
       );
     } finally {
       setIsRefreshing(false);
@@ -282,27 +276,15 @@ export default function Home() {
   return (
     <div className="font-sans relative min-h-[100svh] w-screen overflow-hidden">
       <div className="absolute inset-0">
-        <OpenStreetMap posts={posts} onMarkerSelect={setSelectedGroup} />
+        <OpenStreetMap
+          posts={posts}
+          onMarkerSelect={setSelectedGroup}
+          followUserRequestToken={followUserRequestToken}
+          onGeolocationFixChange={setHasGeolocationFix}
+        />
       </div>
       <Header session={session} status={authStatus} />
-      {showDomainNotice && (
-        <div className="pointer-events-auto absolute left-6 right-6 top-24 z-[2900] flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-100/90 px-4 py-3 text-sm text-amber-950 shadow-lg backdrop-blur">
-          <p className="leading-relaxed">
-            ドメインが変更されたため、リダイレクトしています。<a href="https://yamasekun.vercel.app/" target="_blank" className="underline">
-              新ドメイン
-            </a>にアクセスし、
-            もう一度「ホーム画面に追加」をお願いします。
-          </p>
-          <button
-            type="button"
-            onClick={closeDomainNotice}
-            className="shrink-0 rounded-md border border-amber-400/70 bg-white/80 px-2 py-1 text-xs font-semibold text-amber-900 transition hover:bg-white"
-            aria-label="お知らせを閉じる"
-          >
-            閉じる
-          </button>
-        </div>
-      )}
+
       <IosPwaGuideBanner />
       <aside className="pointer-events-none absolute left-6 top-48 z-[1000] flex flex-col gap-4">
         <WeatherCircle
@@ -321,7 +303,39 @@ export default function Home() {
           tooltip={forecast?.wind ?? weatherCard.tooltip}
         />
       </aside>
-      <div className="pointer-events-auto absolute right-6 top-48 z-[1000]">
+      <div className="pointer-events-auto absolute right-6 top-48 z-[1000] flex flex-col gap-2">
+        {hasGeolocationFix && (
+          <button
+            type="button"
+            onClick={() => {
+              setFollowUserRequestToken((prev) => prev + 1);
+            }}
+            className="rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 p-3 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 transform"
+            aria-label="現在地に戻る"
+            title="現在地に戻る"
+          >
+            <svg
+              className="w-5 h-5 text-gray-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+          </button>
+        )}
         <RefreshButton onRefresh={refreshAllData} isLoading={isRefreshing} />
       </div>
       <div className="w-full pointer-events-auto absolute bottom-8 left-0 z-[4000] px-4">

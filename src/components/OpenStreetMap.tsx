@@ -29,6 +29,8 @@ type OpenStreetMapProps = {
   zoom?: number;
   posts?: MapPost[];
   onMarkerSelect?: (group: MapPostGroup) => void;
+  followUserRequestToken?: number;
+  onGeolocationFixChange?: (hasFix: boolean) => void;
 };
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
@@ -38,9 +40,17 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
 export default function OpenStreetMap({
   posts = [],
   onMarkerSelect,
+  followUserRequestToken,
+  onGeolocationFixChange,
   ...props
 }: OpenStreetMapProps) {
   return (
-    <LeafletMap {...props} posts={posts} onMarkerSelect={onMarkerSelect} />
+    <LeafletMap
+      {...props}
+      posts={posts}
+      onMarkerSelect={onMarkerSelect}
+      followUserRequestToken={followUserRequestToken}
+      onGeolocationFixChange={onGeolocationFixChange}
+    />
   );
 }
