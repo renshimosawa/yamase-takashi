@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   description:
     "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
   icons: {
-    icon: "/favicon.png",
-    apple: "/yamasekun_base.png",
+    icon: "/favicon.ico",
+    apple: "/favicon/apple-icon.png",
   },
   manifest: "/manifest.webmanifest",
   themeColor: "#ff5e62",
