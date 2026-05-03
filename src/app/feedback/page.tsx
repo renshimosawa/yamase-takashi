@@ -30,12 +30,12 @@ export default function FeedbackPage() {
   const portalId = process.env.NEXT_PUBLIC_HUBSPOT_PORTAL_ID ?? "";
   const formId = process.env.NEXT_PUBLIC_HUBSPOT_FORM_ID ?? "";
   const region = process.env.NEXT_PUBLIC_HUBSPOT_REGION ?? "na1";
-  const canRenderForm = portalId !== "" && formId !== "";
+  const canRenderForm = false;
 
   const setupHint = useMemo(
     () =>
       "フォームを表示するには NEXT_PUBLIC_HUBSPOT_PORTAL_ID と NEXT_PUBLIC_HUBSPOT_FORM_ID を設定してください。",
-    []
+    [],
   );
 
   useEffect(() => {
