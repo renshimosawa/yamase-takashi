@@ -5,6 +5,7 @@ export const SMELL_TYPE_ORDER = [
   "iron",
   "umineko",
   "dog_food",
+  "livestock",
 ] as const;
 
 export type SmellType = (typeof SMELL_TYPE_ORDER)[number];
@@ -18,6 +19,7 @@ export const SMELL_TYPE_LABELS: Record<SmellType, string> = {
   iron: "鉄",
   umineko: "ウミネコ",
   dog_food: "ドッグフード",
+  livestock: "家畜",
 };
 
 export const SMELL_TYPE_ICON_PATHS: Record<SmellType, string> = {
@@ -25,6 +27,7 @@ export const SMELL_TYPE_ICON_PATHS: Record<SmellType, string> = {
   iron: `${SMELL_ICON_BASE_PATH}/iron.png`,
   umineko: `${SMELL_ICON_BASE_PATH}/umineko.png`,
   dog_food: `${SMELL_ICON_BASE_PATH}/dog_food.png`,
+  livestock: `${SMELL_ICON_BASE_PATH}/pig.png`,
 };
 
 export type SmellOption = {
