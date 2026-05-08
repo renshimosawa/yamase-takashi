@@ -58,16 +58,33 @@ const faqs = [
   },
 ];
 
-const characterParts = [
-  { icon: "🦑", label: "ゲソ型のまゆげ", desc: "キリリと光る存在感" },
-  { icon: "🌊", label: "ホヤのエンブレム", desc: "胸元に輝く八戸の誇り" },
-  { icon: "🫔", label: "ゲソマフラー", desc: "霧になびく粋なアイテム" },
-  { icon: "🐦", label: "かもめ帽子", desc: "粋に被る海の証" },
+type CharacterPart = { label: string; desc: string } & (
+  | { emoji: string; img?: never }
+  | { img: string; emoji?: never }
+);
+
+const characterParts: CharacterPart[] = [
+  { emoji: "🦑", label: "ゲソ型のまゆげ", desc: "キリリと光る存在感" },
+  {
+    img: "/smell-icon/hoya.png",
+    label: "ホヤのエンブレム",
+    desc: "胸元に輝く八戸の誇り",
+  },
+  {
+    emoji: "🧣",
+    label: "ゲソマフラー",
+    desc: "霧になびく粋なアイテム",
+  },
+  {
+    img: "/smell-icon/umineko.png",
+    label: "ウミネコ帽子",
+    desc: "粋に被る海の証",
+  },
 ];
 
 export default function LandingPage() {
   return (
-    <main className="overflow-x-hidden scroll-smooth">
+    <main className="overflow-x-hidden">
       {/* ① Hero / FV */}
       <LpHeroRef>
         <section className="relative min-h-screen flex flex-col justify-center bg-gradient-to-br from-sky-100 via-cyan-50 to-slate-100 overflow-hidden">
@@ -226,7 +243,21 @@ export default function LandingPage() {
                     key={part.label}
                     className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10"
                   >
-                    <div className="text-2xl mb-1">{part.icon}</div>
+                    <div className="mb-2 w-12 h-12 flex items-center justify-start">
+                      {part.img ? (
+                        <Image
+                          src={part.img}
+                          alt={part.label}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 object-contain drop-shadow"
+                        />
+                      ) : (
+                        <span className="w-12 h-12 flex items-center justify-center text-4xl leading-none">
+                          {part.emoji}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-sm font-bold text-white">
                       {part.label}
                     </div>
@@ -264,7 +295,7 @@ export default function LandingPage() {
                 <h3 className="text-lg font-bold text-slate-800 mb-2">
                   状況の可視化
                 </h3>
-                <p className="text-slate-500 text-sm leading-relaxed">
+                <p className="text-slate text-sm leading-relaxed">
                   マップ上で現在のヤマセ発生状況を一目でチェック。
                   平均強度によってヤマセ君の姿が変わります。
                 </p>
@@ -289,13 +320,13 @@ export default function LandingPage() {
                 <h3 className="text-lg font-bold text-slate-800 mb-2">
                   「匂い」でつながる報告
                 </h3>
-                <p className="text-slate-500 text-sm leading-relaxed">
-                  「鉄の匂い」「ホヤの匂い」「ウミネコの匂い」。
+                <p className="text-slate text-sm leading-relaxed">
+                  「鉄の匂い」「ホヤの匂い」「ドッグフードの匂い」「ウミネコの匂い」。
                   八戸特有の感覚をレベル別にリアルタイム投稿。
                 </p>
               </div>
               <div className="mt-auto flex items-end justify-center gap-2">
-                {["hoya", "iron", "umineko"].map((icon) => (
+                {["iron", "hoya", "dog_food", "umineko"].map((icon) => (
                   <Image
                     key={icon}
                     src={`/smell-icon/${icon}.png`}
@@ -317,7 +348,7 @@ export default function LandingPage() {
                 <h3 className="text-lg font-bold text-slate-800 mb-2">
                   ヤマセと共に届く広告
                 </h3>
-                <p className="text-slate-500 text-sm leading-relaxed">
+                <p className="text-slate text-sm leading-relaxed">
                   八戸に暮らす皆さんと情報をつなぎます。
                   位置情報に連動した地域情報を届けます。
                 </p>

@@ -17,7 +17,7 @@ export default function LpCtaBar({
 
     const heroObserver = new IntersectionObserver(
       ([entry]) => setHeroGone(!entry.isIntersecting),
-      { threshold: 0 }
+      { threshold: 0 },
     );
     heroObserver.observe(hero);
 
@@ -25,7 +25,7 @@ export default function LpCtaBar({
     const bottomObserver = bottom
       ? new IntersectionObserver(
           ([entry]) => setBottomVisible(entry.isIntersecting),
-          { threshold: 0 }
+          { threshold: 0 },
         )
       : null;
     if (bottom && bottomObserver) bottomObserver.observe(bottom);
@@ -49,7 +49,7 @@ export default function LpCtaBar({
           八戸発・無料で今すぐ使えます
         </p>
         <Link
-          href="/register"
+          href="/"
           className="w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center bg-cyan-700 text-white font-black py-3 px-8 rounded-full hover:bg-cyan-600 transition-colors duration-200 text-sm shadow-md"
         >
           ヤマセ君と暮らす
