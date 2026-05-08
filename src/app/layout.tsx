@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://yamasekun-no-shirase.vercel.app"),
+  metadataBase: new URL("https://yamasekun.jp"),
   title: "ヤマセ君の知らせ",
   description:
     "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
@@ -29,17 +29,17 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   themeColor: "#ff5e62",
   alternates: {
-    canonical: "https://yamasekun-no-shirase.vercel.app/",
+    canonical: "https://yamasekun.jp/",
   },
   openGraph: {
     title: "ヤマセ君の知らせ",
     description:
       "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
-    url: "https://yamasekun-no-shirase.vercel.app/",
+    url: "https://yamasekun.jp/",
     type: "website",
     images: [
       {
-        url: "https://yamasekun-no-shirase.vercel.app/og-image.jpg",
+        url: "https://yamasekun.jp/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "ヤマセ君",

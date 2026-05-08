@@ -16,7 +16,7 @@ const APP_ORIGIN =
   process.env.NEXT_PUBLIC_APP_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.NEXTAUTH_URL ||
-  "https://yamasekun-no-shirase.vercel.app";
+  "https://yamasekun.jp";
 
 type FcmTokenRecord = {
   token: string;

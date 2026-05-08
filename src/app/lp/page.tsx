@@ -11,11 +11,11 @@ export const metadata: Metadata = {
     title: "ヤマセ君の知らせ｜八戸のヤマセと暮らし、つながる。",
     description:
       "八戸市民のアイデンティティ「ヤマセ」を可視化。匂いや霧の状況をみんなで共有し、憎めぬあいつ「ヤマセ君」と共に暮らすためのブラウザアプリ。",
-    url: "https://yamasekun-no-shirase.vercel.app/lp/",
+    url: "https://yamasekun.jp/lp/",
     type: "website",
     images: [
       {
-        url: "https://yamasekun-no-shirase.vercel.app/og-image.jpg",
+        url: "https://yamasekun.jp/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "ヤマセ君の知らせ",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     ],
   },
   alternates: {
-    canonical: "https://yamasekun-no-shirase.vercel.app/lp/",
+    canonical: "https://yamasekun.jp/lp/",
   },
 };
 
@@ -61,76 +61,76 @@ const faqs = [
 const characterParts = [
   { icon: "🦑", label: "ゲソ型のまゆげ", desc: "キリリと光る存在感" },
   { icon: "🌊", label: "ホヤのエンブレム", desc: "胸元に輝く八戸の誇り" },
-  { icon: "🌫️", label: "ゲソマフラー", desc: "霧になびく粋なアイテム" },
+  { icon: "🫔", label: "ゲソマフラー", desc: "霧になびく粋なアイテム" },
   { icon: "🐦", label: "かもめ帽子", desc: "粋に被る海の証" },
 ];
 
 export default function LandingPage() {
   return (
-    <main className="overflow-x-hidden">
+    <main className="overflow-x-hidden scroll-smooth">
       {/* ① Hero / FV */}
       <LpHeroRef>
-      <section className="relative min-h-screen flex flex-col justify-center bg-gradient-to-br from-sky-100 via-cyan-50 to-slate-100 overflow-hidden">
-        {/* 霧の装飾 */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-0 w-full h-full opacity-30 bg-[radial-gradient(ellipse_80%_60%_at_60%_40%,_#bae6fd,_transparent)]" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-sky-200 opacity-20 blur-3xl" />
-        </div>
+        <section className="relative min-h-screen flex flex-col justify-center bg-gradient-to-br from-sky-100 via-cyan-50 to-slate-100 overflow-hidden">
+          {/* 霧の装飾 */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-0 w-full h-full opacity-30 bg-[radial-gradient(ellipse_80%_60%_at_60%_40%,_#bae6fd,_transparent)]" />
+            <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-sky-200 opacity-20 blur-3xl" />
+          </div>
 
-        <div className="relative max-w-5xl mx-auto px-6 py-20 flex flex-col md:flex-row items-center gap-10 md:gap-16">
-          <div className="flex-1 text-center md:text-left">
-            <p className="inline-block text-xs font-bold tracking-widest text-cyan-700 bg-cyan-100 px-3 py-1 rounded-full mb-4">
-              八戸発・天気でつながるコミュニティアプリ
-            </p>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight text-slate-800">
-              今日も憎めぬ
-              <br />
-              アイツがやってくる♡
-            </h1>
-            <p className="mt-4 text-lg text-slate-600 font-medium">
-              ヤマセと暮らし、ヤマセでつながる。
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-              <Link
-                href="/register"
-                className="inline-flex items-center justify-center gap-2 bg-cyan-700 text-white text-base font-bold py-4 px-8 rounded-full hover:bg-cyan-600 transition-colors duration-200 shadow-lg"
-              >
-                ヤマセ君と暮らす
-              </Link>
-              <a
-                href="#features"
-                className="inline-flex items-center justify-center gap-2 bg-white text-cyan-700 text-base font-bold py-4 px-8 rounded-full border-2 border-cyan-200 hover:border-cyan-400 transition-colors duration-200"
-              >
-                詳しく見る
-              </a>
+          <div className="relative max-w-5xl mx-auto px-6 py-20 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+            <div className="flex-1 text-center md:text-left">
+              <p className="inline-block text-xs font-bold tracking-widest text-cyan-700 bg-cyan-100 px-3 py-1 rounded-full mb-4">
+                八戸発・天気でつながるコミュニティアプリ
+              </p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight text-slate-800">
+                今日も憎めぬ
+                <br />
+                アイツがやってくる♡
+              </h1>
+              <p className="mt-4 text-lg text-slate-600 font-medium">
+                ヤマセと暮らし、ヤマセでつながる。
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                <Link
+                  href="/"
+                  className="inline-flex items-center justify-center gap-2 bg-cyan-700 text-white text-base font-bold py-4 px-8 rounded-full hover:bg-cyan-600 transition-colors duration-200 shadow-lg"
+                >
+                  ヤマセ君と暮らす
+                </Link>
+                <a
+                  href="#features"
+                  className="inline-flex items-center justify-center gap-2 bg-white text-cyan-700 text-base font-bold py-4 px-8 rounded-full border-2 border-cyan-200 hover:border-cyan-400 transition-colors duration-200"
+                >
+                  詳しく見る
+                </a>
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <Image
+                src="/yamasekun_base.png"
+                alt="ヤマセ タケシ"
+                width={320}
+                height={320}
+                className="drop-shadow-2xl"
+                priority
+              />
             </div>
           </div>
-          <div className="flex-shrink-0">
-            <Image
-              src="/yamasekun_base.png"
-              alt="ヤマセ タケシ"
-              width={320}
-              height={320}
-              className="drop-shadow-2xl"
-              priority
-            />
-          </div>
-        </div>
 
-        {/* スクロールヒント */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-cyan-600 opacity-60">
-          <span className="text-xs font-medium tracking-wider">SCROLL</span>
-          <svg width="16" height="24" viewBox="0 0 16 24" fill="none">
-            <path
-              d="M8 0v20M2 14l6 6 6-6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      </section>
+          {/* スクロールヒント */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-cyan-600 opacity-60">
+            <span className="text-xs font-medium tracking-wider">SCROLL</span>
+            <svg width="16" height="24" viewBox="0 0 16 24" fill="none">
+              <path
+                d="M8 0v20M2 14l6 6 6-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </section>
       </LpHeroRef>
 
       {/* ② イントロ：ヤマセとは？ */}
@@ -148,8 +148,11 @@ export default function LandingPage() {
               ですが、八戸市民にとって「ヤマセ」は、単なる気象現象ではありません。
             </p>
             <p>
-              冷たく湿った北東の風が運んでくる、<strong className="text-slate-800">あの霧、あの匂い、あの肌寒さ</strong>。
-              時に冷害をもたらす「餓死風」と恐れられた歴史もありますが、
+              冷たく湿った北東の風が運んでくる、
+              <strong className="text-slate-800">
+                あの霧、あの匂い、あの肌寒さ
+              </strong>
+              。 時に冷害をもたらす「餓死風」と恐れられた歴史もありますが、
               それは私たちの日常に深く根ざした、切っても切れないアイデンティティでもあります。
             </p>
             <p>
@@ -160,9 +163,7 @@ export default function LandingPage() {
             <blockquote className="border-l-4 border-cyan-400 pl-5 py-2 bg-cyan-50 rounded-r-xl italic text-slate-700 font-bold">
               「ヤマセと共に育った我々は、ヤマセを愛し、ヤマセと暮らす」
             </blockquote>
-            <p>
-              私たちは、そんなヤマセに愛着を込めて再定義しました。
-            </p>
+            <p>私たちは、そんなヤマセに愛着を込めて再定義しました。</p>
           </div>
         </div>
       </section>
@@ -202,7 +203,7 @@ export default function LandingPage() {
                         Lv.{i}
                       </span>
                     </div>
-                  )
+                  ),
                 )}
               </div>
               <p className="text-center text-xs text-cyan-400 mt-3">
@@ -353,7 +354,7 @@ export default function LandingPage() {
             地域への愛と遊び心から始まった、八戸専用のコミュニケーションツールです。
           </p>
           <a
-            href="https://hachinoheideathon.example.com"
+            href="https://8nohe-ikiikidx.jp/event20250930/"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-slate-800 text-white font-bold py-3 px-7 rounded-full hover:bg-slate-700 transition-colors duration-200 text-sm"
@@ -412,7 +413,10 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Footer */}
-      <section id="lp-bottom-cta" className="bg-gradient-to-br from-cyan-700 to-slate-800 py-20 px-6 text-white text-center">
+      <section
+        id="lp-bottom-cta"
+        className="bg-gradient-to-br from-cyan-700 to-slate-800 py-20 px-6 text-white text-center"
+      >
         <h2 className="text-2xl sm:text-3xl font-black mb-3">
           さあ、ヤマセ君と暮らそう。
         </h2>
@@ -420,7 +424,7 @@ export default function LandingPage() {
           無料で、今すぐ始められます。
         </p>
         <Link
-          href="/register"
+          href="/"
           className="inline-flex items-center gap-2 bg-white text-cyan-800 font-black py-4 px-10 rounded-full hover:bg-cyan-50 transition-colors duration-200 text-base shadow-xl"
         >
           ヤマセ君と暮らす
