@@ -56,6 +56,8 @@ export default function LeafletMap({
   );
   const [hasGeolocationFix, setHasGeolocationFix] = useState(false);
   const [shouldFollowUser, setShouldFollowUser] = useState(true);
+  const userPositionRef = useRef<LatLngExpression | null>(null);
+  userPositionRef.current = userPosition;
 
   const smellIconCache = useRef(new Map<SmellType, L.DivIcon>());
 
@@ -172,10 +174,10 @@ export default function LeafletMap({
       return;
     }
 
-    if (userPosition) {
+    if (userPositionRef.current) {
       setShouldFollowUser(true);
     }
-  }, [followUserRequestToken, userPosition]);
+  }, [followUserRequestToken]);
 
   const handleUserInteraction = useCallback(() => {
     setShouldFollowUser((prev) => (prev ? false : prev));
