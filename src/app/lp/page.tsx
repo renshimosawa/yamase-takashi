@@ -97,7 +97,7 @@ export default function LandingPage() {
           <div className="relative max-w-5xl mx-auto px-6 py-20 flex flex-col md:flex-row items-center gap-10 md:gap-16">
             <div className="flex-1 text-center md:text-left">
               <p className="inline-block text-xs font-bold tracking-widest text-cyan-700 bg-cyan-100 px-3 py-1 rounded-full mb-4">
-                八戸発・天気でつながるコミュニティアプリ
+                八戸発・天気でつながるコミュニケーションアプリ
               </p>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight text-slate-800">
                 今日も憎めぬ
@@ -295,7 +295,7 @@ export default function LandingPage() {
                 <h3 className="text-lg font-bold text-slate-800 mb-2">
                   状況の可視化
                 </h3>
-                <p className="text-slate text-sm leading-relaxed">
+                <p className="text-slate-900 text-sm leading-relaxed">
                   マップ上で現在のヤマセ発生状況を一目でチェック。
                   平均強度によってヤマセ君の姿が変わります。
                 </p>
@@ -320,7 +320,7 @@ export default function LandingPage() {
                 <h3 className="text-lg font-bold text-slate-800 mb-2">
                   「匂い」でつながる報告
                 </h3>
-                <p className="text-slate text-sm leading-relaxed">
+                <p className="text-slate-900 text-sm leading-relaxed">
                   「鉄の匂い」「ホヤの匂い」「ドッグフードの匂い」「ウミネコの匂い」。
                   八戸特有の感覚をレベル別にリアルタイム投稿。
                 </p>
@@ -348,7 +348,7 @@ export default function LandingPage() {
                 <h3 className="text-lg font-bold text-slate-800 mb-2">
                   ヤマセと共に届く広告
                 </h3>
-                <p className="text-slate text-sm leading-relaxed">
+                <p className="text-slate-900 text-sm leading-relaxed">
                   八戸に暮らす皆さんと情報をつなぎます。
                   位置情報に連動した地域情報を届けます。
                 </p>
@@ -379,7 +379,7 @@ export default function LandingPage() {
           <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-bold px-4 py-2 rounded-full mb-8">
             🏆 八戸アイディアソン・ハッカソン2025 最優秀賞
           </div>
-          <p className="text-slate-600 leading-relaxed text-base sm:text-lg mb-8">
+          <p className="text-slate-900 leading-relaxed text-base sm:text-lg mb-8">
             このアプリは「八戸アイディアソン・ハッカソン2025」から生まれました。
             地元の課題を面白がり、テクノロジーで解決するために開発。
             地域への愛と遊び心から始まった、八戸専用のコミュニケーションツールです。
