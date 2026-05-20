@@ -84,6 +84,23 @@ export default function FeedbackPage() {
                 strategy="afterInteractive"
                 onLoad={() => setIsScriptReady(true)}
               />
+              {!isScriptReady && (
+                <div className="mt-4 animate-pulse space-y-4">
+                  <div className="space-y-1">
+                    <div className="h-3 w-24 rounded bg-slate-200" />
+                    <div className="h-10 rounded-lg bg-slate-200" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="h-3 w-32 rounded bg-slate-200" />
+                    <div className="h-10 rounded-lg bg-slate-200" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="h-3 w-20 rounded bg-slate-200" />
+                    <div className="h-28 rounded-lg bg-slate-200" />
+                  </div>
+                  <div className="h-10 w-28 rounded-lg bg-slate-300" />
+                </div>
+              )}
               <div id="hubspot-feedback-form" className="mt-4" />
             </>
           ) : (
