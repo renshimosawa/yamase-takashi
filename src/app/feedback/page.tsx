@@ -30,7 +30,7 @@ export default function FeedbackPage() {
   const portalId = process.env.NEXT_PUBLIC_HUBSPOT_PORTAL_ID ?? "";
   const formId = process.env.NEXT_PUBLIC_HUBSPOT_FORM_ID ?? "";
   const region = process.env.NEXT_PUBLIC_HUBSPOT_REGION ?? "na1";
-  const canRenderForm = false;
+  const canRenderForm = portalId !== "" && formId !== "";
 
   const setupHint = useMemo(
     () =>
