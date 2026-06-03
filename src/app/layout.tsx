@@ -28,6 +28,10 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.webmanifest",
   themeColor: "#ff5e62",
+  robots: {
+    index: false,
+    follow: true,
+  },
   alternates: {
     canonical: "https://yamasekun.jp/",
   },
