@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/lp/",
-        disallow: ["/", "/api/", "/mypage/", "/feedback/"],
+        disallow: ["/api/", "/mypage/", "/feedback/"],
       },
     ],
     sitemap: "https://yamasekun.jp/sitemap.xml",
