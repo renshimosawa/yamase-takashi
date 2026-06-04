@@ -140,6 +140,5 @@ using ((auth.role() = 'service_role'::text))
 with check ((auth.role() = 'service_role'::text));
 
 
-CREATE TRIGGER notify AFTER INSERT ON public.posts FOR EACH ROW EXECUTE FUNCTION supabase_functions.http_request('https://yamasekun-no-shirase.vercel.app/api/webhooks/new-post', 'POST', '{"Authorization":"Bearer post-webhook-nc89ehqbdggienxvbr7yhsbkpiclma53fdhjcn8"}', '{}', '5000');
 
 
