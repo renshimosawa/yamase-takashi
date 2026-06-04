@@ -50,11 +50,6 @@ const getTodayDateRange = () => {
   return { start: start.toISOString(), end: end.toISOString() };
 };
 
-const getCleanupThreshold = (days = 7) => {
-  const now = new Date();
-  const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-  return cutoff.toISOString();
-};
 type CreatePostRequest = {
   description: string;
   smell_type: SmellType | null;
@@ -296,16 +291,6 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const supabase = getSupabaseAdmin();
-
-    const cutoff = getCleanupThreshold();
-    const { error: cleanupError } = await supabase
-      .from("posts")
-      .delete()
-      .lt("inserted_at", cutoff);
-
-    if (cleanupError) {
-      console.error("Failed to cleanup old posts", cleanupError);
-    }
 
     const { start, end } = getTodayDateRange();
 
