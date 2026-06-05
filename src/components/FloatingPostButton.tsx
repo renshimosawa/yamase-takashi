@@ -47,7 +47,7 @@ export default function FloatingPostButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group relative flex items-center gap-2 px-5 py-3 justify-center rounded-full bg-gradient-to-r from-[#FF8A00] via-[#FF5E62] to-[#FF2D55] text-base font-semibold text-white shadow-[0_10px_30px_rgba(255,94,98,0.45)] transition hover:shadow-[0_12px_40px_rgba(255,94,98,0.55)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#FF5E62]/50"
+        className="group relative flex items-center gap-2 px-5 py-3 justify-center rounded-full bg-gradient-to-r from-[#3B82F6] via-[#2563EB] to-[#1D4ED8] text-base font-semibold text-white shadow-[0_10px_30px_rgba(37,99,235,0.45)] transition hover:shadow-[0_12px_40px_rgba(29,78,216,0.55)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2563EB]/50"
         aria-label="投稿する"
       >
         <span
