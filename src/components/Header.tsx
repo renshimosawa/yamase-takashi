@@ -18,6 +18,9 @@ export type HeaderProps = {
 export default function Header({ session, status }: HeaderProps) {
   const isLoading = status === "loading";
   const isAuthenticated = status === "authenticated" && session?.user;
+  const isStaging =
+    (process.env.NEXT_PUBLIC_APP_ENV ?? "") === "staging" ||
+    (process.env.NEXT_PUBLIC_SITE_URL ?? "").includes("stg.");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<
     NotificationPermission | "unsupported"
@@ -102,10 +105,19 @@ export default function Header({ session, status }: HeaderProps) {
     }
   };
 
+  const headerTitleClassName = isStaging
+    ? "flex items-center gap-2 rounded-full bg-red-100/90 p-4 text-xl font-semibold text-red-900 shadow-lg backdrop-blur"
+    : "flex items-center gap-2 rounded-full bg-black/70 p-4 text-xl font-semibold text-white shadow-lg backdrop-blur";
+
+  const stagingBadgeClassName = isStaging
+    ? "rounded-full border border-red-300 px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-red-700"
+    : "rounded-full border border-white/60 px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90";
+
   return (
     <header className="pointer-events-auto absolute left-6 right-6 top-6 z-[3000] flex items-center justify-between">
-      <h1 className="rounded-full bg-black/70 p-4 text-xl font-semibold text-white shadow-lg backdrop-blur">
+      <h1 className={headerTitleClassName}>
         ヤマセ君の知らせ
+        {isStaging && <span className={stagingBadgeClassName}>dev</span>}
       </h1>
       <div className="flex items-center gap-4">
         {isLoading ? (

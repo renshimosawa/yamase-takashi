@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:staging": "dotenv -e .env.development -- next dev -p 8090",
     "build": "next build",
-    "start": "next start"
+    "build:staging": "dotenv -e .env.development -- next build",
+    "start": "next start",
+    "start:staging": "dotenv -e .env.development -- next start -p 8090"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
@@ -26,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
