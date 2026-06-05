@@ -290,6 +290,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
+    console.log("[DEBUG] SUPABASE_URL =", process.env.SUPABASE_URL);
     const supabase = getSupabaseAdmin();
 
     const { start, end } = getTodayDateRange();
