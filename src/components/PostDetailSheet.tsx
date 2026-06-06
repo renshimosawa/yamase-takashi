@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { MapPostGroup } from "./OpenStreetMap";
 import {
   getSmellIconPath,
@@ -7,6 +8,19 @@ import {
   SMELL_TYPE_LABELS,
   type SmellType,
 } from "@/constants/smell";
+
+const AD_IMAGES = [
+  {
+    image: "/ad-images/bites.jpg",
+    text: "階上のハンバーガーショップ",
+    area: "階上町",
+  },
+  {
+    image: "/ad-images/kazewaraudou.jpg",
+    text: "下長へ移転！コワーキングスペース風笑堂",
+    area: "八戸市下長",
+  },
+];
 
 type PostDetailSheetProps = {
   group: MapPostGroup | null;
@@ -17,6 +31,11 @@ export default function PostDetailSheet({
   group,
   onClose,
 }: PostDetailSheetProps) {
+  const ad = useMemo(
+    () => AD_IMAGES[Math.floor(Math.random() * AD_IMAGES.length)],
+    [group],
+  );
+
   if (!group) return null;
 
   return (
@@ -73,7 +92,7 @@ export default function PostDetailSheet({
                                 (post.smell_type ?? "hoya") as SmellType
                               ]
                             }
-                            className="h-8 w-8 rounded-full border border-slate-200 bg-slate-50 object-contain p-1"
+                            className="h-４ w-8 rounded-full border border-slate-200 bg-slate-50 object-contain p-1"
                           />
                         )}
                         <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700">
@@ -93,25 +112,28 @@ export default function PostDetailSheet({
             </div>
             <hr className="my-4 border-slate-200" />
             <div className="relative mx-auto overflow-hidden rounded-2xl bg-white">
-              <div className="absolute inset-0 pointer-events-none bg-[url('/wind.png')] bg-[length:170px] bg-[position:center_top_6rem] md:bg-[position:center_top_5rem] bg-no-repeat opacity-40" />
               <div className="relative z-10">
+                {ad.text && (
+                  <p className="mb-3 px-4 text-center text-lg font-semibold text-slate-700">
+                    {ad.text}
+                  </p>
+                )}
                 <img
-                  src="/ad_secTitle.png"
-                  alt="ad_secTitle"
-                  className="w-[360px] mx-auto md:w-[310px]"
+                  src={ad.image}
+                  alt="advertisement"
+                  className="h-[150px] mx-auto object-contain"
                 />
-                <p className="text-center text-3xl font-bold text-blue-800">
-                  ここに広告を
-                  <br />
-                  出しませんか？
-                </p>
-                <div className="w-[360px] h-[100px] mx-auto md:w-[270px]"></div>
+                {ad.area && (
+                  <p className="px-4 pt-4 text-center text-xs text-slate-400">
+                    {ad.area}
+                  </p>
+                )}
               </div>
               <img src="ad_secBG.png" alt="" className="relative z-10" />
               <img
-                src="yamasekun_base.png"
+                src="yamasekun_base_ads.png"
                 alt="ヤマセタカシくん"
-                className="absolute bottom-0 right-[-30px] z-20 w-[160px] md:bottom-10 md:right-0"
+                className="absolute bottom-0 right-0 z-20 w-[140px] md:w-[190px] md:bottom-10 md:right-0"
               />
             </div>
           </div>
