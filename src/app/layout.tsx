@@ -17,48 +17,54 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://yamasekun.jp"),
-  title: "ヤマセ君の知らせ",
-  description:
-    "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/favicon/apple-icon.png",
-  },
-  manifest: "/manifest.webmanifest",
-  themeColor: "#ff5e62",
-  robots: {
-    index: false,
-    follow: true,
-  },
-  alternates: {
-    canonical: "https://yamasekun.jp/",
-  },
-  openGraph: {
+export async function generateMetadata(): Promise<Metadata> {
+  const isStaging =
+    (process.env.NEXT_PUBLIC_APP_ENV ?? "") === "staging" ||
+    (process.env.NEXT_PUBLIC_SITE_URL ?? "").includes("stg.");
+
+  return {
+    metadataBase: new URL("https://yamasekun.jp"),
     title: "ヤマセ君の知らせ",
     description:
       "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
-    url: "https://yamasekun.jp/",
-    type: "website",
-    images: [
-      {
-        url: "https://yamasekun.jp/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "ヤマセ君",
-      },
-    ],
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "ヤマセ君の知らせ",
-  },
-  formatDetection: {
-    telephone: false,
-  },
-};
+    icons: {
+      icon: "/favicon.ico",
+      apple: isStaging ? "/yamasekun_stg.png" : "/favicon/apple-icon.png",
+    },
+    manifest: "/manifest.webmanifest",
+    themeColor: "#ff5e62",
+    robots: {
+      index: false,
+      follow: true,
+    },
+    alternates: {
+      canonical: "https://yamasekun.jp/",
+    },
+    openGraph: {
+      title: "ヤマセ君の知らせ",
+      description:
+        "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
+      url: "https://yamasekun.jp/",
+      type: "website",
+      images: [
+        {
+          url: "https://yamasekun.jp/og-image.jpg",
+          width: 1200,
+          height: 630,
+          alt: "ヤマセ君",
+        },
+      ],
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "ヤマセ君の知らせ",
+    },
+    formatDetection: {
+      telephone: false,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
