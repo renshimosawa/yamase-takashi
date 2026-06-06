@@ -374,12 +374,18 @@ export default function MyPage() {
     <div className="relative min-h-[100svh] w-screen bg-gradient-to-br from-[#111827] via-[#0f172a] to-[#1f2937] text-white">
       <Header session={session} status={authStatus} />
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-16 pt-28 sm:px-8">
-        <div className="flex items-center">
+        <div className="flex items-center gap-4">
           <Link
             href="/"
             className="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-400/20 px-4 py-2 text-sm font-semibold text-cyan-50 shadow-lg backdrop-blur transition hover:bg-cyan-300/30"
           >
             ← 地図へ戻る
+          </Link>
+          <Link
+            href="/lp/"
+            className="text-sm text-cyan-300/80 underline underline-offset-2 transition hover:text-cyan-200"
+          >
+            ヤマセ君の知らせについて
           </Link>
         </div>
         {pwaGuidePlatform && (
