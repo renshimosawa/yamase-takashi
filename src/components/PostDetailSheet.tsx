@@ -12,7 +12,7 @@ import {
 const AD_IMAGES = [
   {
     image: "/ad-images/bites.jpg",
-    text: "階上のハンバーガーショップ",
+    text: "階上町でハンバーガーを食べよう！",
     area: "階上町",
   },
   {
