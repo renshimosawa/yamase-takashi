@@ -57,6 +57,8 @@ type CreatePostRequest = {
   longitude?: number | null;
   intensity?: number | null;
   emoji?: string | null;
+  temperature?: number | null;
+  wind_direction?: number | null;
 };
 
 const truncateText = (text: string, maxLength: number) =>
@@ -180,7 +182,7 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreatePostRequest;
-    const { description, smell_type, latitude, longitude, intensity, emoji } =
+    const { description, smell_type, latitude, longitude, intensity, emoji, temperature, wind_direction } =
       body;
 
     if (!description || description.trim().length === 0) {
@@ -257,6 +259,8 @@ export async function POST(request: Request) {
       emoji: storedEmoji,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
+      temperature: temperature ?? null,
+      wind_direction: wind_direction ?? null,
     });
 
     if (error) {

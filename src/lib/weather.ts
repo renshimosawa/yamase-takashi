@@ -119,17 +119,23 @@ type OpenMeteoResponse = {
     time: string;
     interval: number;
     temperature_2m?: number;
+    wind_direction_10m?: number;
   };
 };
 
-export async function fetchCurrentTemperature(
+export type CurrentWeather = {
+  temperature: number | null;
+  windDirection: number | null;
+};
+
+export async function fetchCurrentWeather(
   latitude: number,
   longitude: number
-): Promise<number | null> {
+): Promise<CurrentWeather> {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", latitude.toString());
   url.searchParams.set("longitude", longitude.toString());
-  url.searchParams.set("current", "temperature_2m");
+  url.searchParams.set("current", "temperature_2m,wind_direction_10m");
   url.searchParams.set("timezone", "Asia/Tokyo");
 
   const response = await fetch(url.toString(), {
@@ -141,10 +147,21 @@ export async function fetchCurrentTemperature(
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch current temperature: ${response.status} ${response.statusText}`
+      `Failed to fetch current weather: ${response.status} ${response.statusText}`
     );
   }
 
   const data = (await response.json()) as OpenMeteoResponse;
-  return data.current?.temperature_2m ?? null;
+  return {
+    temperature: data.current?.temperature_2m ?? null,
+    windDirection: data.current?.wind_direction_10m ?? null,
+  };
+}
+
+export async function fetchCurrentTemperature(
+  latitude: number,
+  longitude: number
+): Promise<number | null> {
+  const weather = await fetchCurrentWeather(latitude, longitude);
+  return weather.temperature;
 }

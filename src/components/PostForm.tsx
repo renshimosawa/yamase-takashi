@@ -11,6 +11,7 @@ import {
   type SmellType,
 } from "@/constants/smell";
 import EmojiPicker from "@/components/EmojiPicker";
+import { fetchCurrentWeather } from "@/lib/weather";
 
 export type PostFormProps = {
   onSubmitted: () => Promise<void> | void;
@@ -41,6 +42,11 @@ type LocationState =
       error: null;
     }
   | { status: "error"; coordinates: null; error: string };
+
+type WeatherState = {
+  temperature: number | null;
+  windDirection: number | null;
+};
 
 const initialFormState: PostFormState = {
   intensity: 0,
@@ -84,6 +90,10 @@ export default function PostForm({
     error: null,
   });
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [weather, setWeather] = useState<WeatherState>({
+    temperature: null,
+    windDirection: null,
+  });
   const emojiPickerWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const requestLocation = useCallback(async () => {
@@ -106,14 +116,20 @@ export default function PostForm({
         return;
       }
 
+      const coords = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      };
+
       setLocationState({
         status: "success",
-        coordinates: {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        },
+        coordinates: coords,
         error: null,
       });
+
+      fetchCurrentWeather(coords.latitude, coords.longitude)
+        .then((w) => setWeather({ temperature: w.temperature, windDirection: w.windDirection }))
+        .catch((err) => console.error("Failed to fetch weather", err));
     } catch (err) {
       console.error("Failed to get current position", err);
       setLocationState({
@@ -129,6 +145,7 @@ export default function PostForm({
       setForm({ ...initialFormState });
       setMessage(null);
       setLocationState({ status: "idle", coordinates: null, error: null });
+      setWeather({ temperature: null, windDirection: null });
       setIsEmojiPickerOpen(false);
       return;
     }
@@ -232,6 +249,8 @@ export default function PostForm({
               : null,
           latitude: locationState.coordinates.latitude,
           longitude: locationState.coordinates.longitude,
+          temperature: weather.temperature,
+          wind_direction: weather.windDirection,
         }),
       });
 
