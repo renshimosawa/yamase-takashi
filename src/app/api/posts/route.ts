@@ -311,7 +311,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("posts")
       .select(
-        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at, address, municipality, district",
+        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at, address, municipality, district, temperature, wind_direction",
       )
       .gte("inserted_at", start)
       .lte("inserted_at", end)

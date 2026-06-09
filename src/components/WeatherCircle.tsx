@@ -1,7 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 type WeatherCircleProps = {
-  icon: string;
+  icon: ReactNode;
   label: string;
   tooltip: string;
 };

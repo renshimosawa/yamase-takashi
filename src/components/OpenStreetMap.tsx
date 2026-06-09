@@ -17,6 +17,8 @@ export type MapPost = {
   address?: string | null;
   municipality?: string | null;
   district?: string | null;
+  temperature?: number | null;
+  wind_direction?: number | null;
 };
 
 export type MapPostGroup = {

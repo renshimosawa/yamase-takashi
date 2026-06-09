@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { MapPostGroup } from "./OpenStreetMap";
+import WindArrow, { degreesToCompass } from "./WindArrow";
 import {
   getSmellIconPath,
   NEUTRAL_SMELL_EMOJI,
@@ -110,6 +111,16 @@ export default function PostDetailSheet({
                           {new Date(post.inserted_at).toLocaleString("ja-JP")}
                         </span>
                       )}
+                      {typeof post.wind_direction === "number" && (
+                        <span className="ml-auto flex items-center gap-1.5 text-xs text-slate-600">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm">
+                            <WindArrow degrees={post.wind_direction} size={16} />
+                          </span>
+                          <span className="font-medium">
+                            {degreesToCompass(post.wind_direction)}の風
+                          </span>
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-slate-800">{post.description}</p>
                   </li>
@@ -139,7 +150,7 @@ export default function PostDetailSheet({
               <img
                 src="yamasekun_base_ads.png"
                 alt="ヤマセタカシくん"
-                className="absolute bottom-0 right-0 z-20 w-[140px] md:w-[190px] md:bottom-10 md:right-0"
+                className="absolute bottom-0 right-0 z-20 w-[130px] md:w-[190px] md:bottom-10 md:right-0"
               />
             </div>
           </div>
