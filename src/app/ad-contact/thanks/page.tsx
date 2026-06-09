@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function AdContactThanksPage() {
   return (
     <main className="min-h-screen bg-white flex items-center justify-center px-6">
@@ -14,13 +16,12 @@ export default function AdContactThanksPage() {
             内容を確認の上、入力いただいたメールアドレスにご連絡差し上げます。
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => window.history.back()}
+        <Link
+          href="/"
           className="inline-block mt-4 text-cyan-700 underline hover:text-cyan-900 text-sm"
         >
-          → 元のページに戻る
-        </button>
+          → 地図に戻る
+        </Link>
       </div>
     </main>
   );
