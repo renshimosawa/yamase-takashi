@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getServerAuthSession } from "@/lib/auth";
 import { getFirebaseAdminMessaging } from "@/lib/firebase-admin";
+import { reverseGeocode } from "@/lib/geocoding";
 import {
   isValidNeutralSmellEmoji,
   isValidSmellType,
@@ -250,6 +251,11 @@ export async function POST(request: Request) {
     const supabase = getSupabaseAdmin();
     const insertedAt = new Date().toISOString();
 
+    const geocoded =
+      typeof latitude === "number" && typeof longitude === "number"
+        ? await reverseGeocode(latitude, longitude)
+        : { municipality: null, district: null, address: null };
+
     const { error } = await supabase.from("posts").insert({
       user_id: session.user.id,
       description,
@@ -261,6 +267,9 @@ export async function POST(request: Request) {
       longitude: longitude ?? null,
       temperature: temperature ?? null,
       wind_direction: wind_direction ?? null,
+      address: geocoded.address,
+      municipality: geocoded.municipality,
+      district: geocoded.district,
     });
 
     if (error) {
@@ -302,7 +311,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("posts")
       .select(
-        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at",
+        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at, address, municipality, district",
       )
       .gte("inserted_at", start)
       .lte("inserted_at", end)

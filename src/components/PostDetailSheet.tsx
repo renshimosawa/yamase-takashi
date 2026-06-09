@@ -38,6 +38,11 @@ export default function PostDetailSheet({
 
   if (!group) return null;
 
+  const address =
+    group.posts.find((post) => post.address)?.address ??
+    group.posts.find((post) => post.district)?.district ??
+    null;
+
   return (
     <div className="pointer-events-none fixed inset-0 z-[4500] flex items-end justify-center pb-0">
       <div className="pointer-events-auto w-full max-w-2xl max-h-[95vh] translate-y-0 rounded-t-3xl bg-white text-slate-900 shadow-2xl">
@@ -47,6 +52,11 @@ export default function PostDetailSheet({
               <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                 投稿詳細
               </p>
+              {address && (
+                <p className="text-base font-semibold text-slate-800">
+                  {address}
+                </p>
+              )}
               <p className="text-sm text-slate-600">
                 緯度: {group.latitude.toFixed(6)}｜経度:{" "}
                 {group.longitude.toFixed(6)}
