@@ -11,6 +11,7 @@ type HubspotFormsApi = {
       portalId: string;
       formId: string;
       target: string;
+      onFormReady?: () => void;
     }) => void;
   };
 };
