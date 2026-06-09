@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getServerAuthSession } from "@/lib/auth";
 import { getFirebaseAdminMessaging } from "@/lib/firebase-admin";
+import { reverseGeocode } from "@/lib/geocoding";
 import {
   isValidNeutralSmellEmoji,
   isValidSmellType,
@@ -57,6 +58,8 @@ type CreatePostRequest = {
   longitude?: number | null;
   intensity?: number | null;
   emoji?: string | null;
+  temperature?: number | null;
+  wind_direction?: number | null;
 };
 
 const truncateText = (text: string, maxLength: number) =>
@@ -180,7 +183,7 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreatePostRequest;
-    const { description, smell_type, latitude, longitude, intensity, emoji } =
+    const { description, smell_type, latitude, longitude, intensity, emoji, temperature, wind_direction } =
       body;
 
     if (!description || description.trim().length === 0) {
@@ -248,6 +251,11 @@ export async function POST(request: Request) {
     const supabase = getSupabaseAdmin();
     const insertedAt = new Date().toISOString();
 
+    const geocoded =
+      typeof latitude === "number" && typeof longitude === "number"
+        ? await reverseGeocode(latitude, longitude)
+        : { municipality: null, district: null, address: null };
+
     const { error } = await supabase.from("posts").insert({
       user_id: session.user.id,
       description,
@@ -257,6 +265,11 @@ export async function POST(request: Request) {
       emoji: storedEmoji,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
+      temperature: temperature ?? null,
+      wind_direction: wind_direction ?? null,
+      address: geocoded.address,
+      municipality: geocoded.municipality,
+      district: geocoded.district,
     });
 
     if (error) {
@@ -298,7 +311,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("posts")
       .select(
-        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at",
+        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at, address, municipality, district, temperature, wind_direction",
       )
       .gte("inserted_at", start)
       .lte("inserted_at", end)

@@ -7,12 +7,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "next-auth";
 import { getSession } from "next-auth/react";
 
-import { fetchCurrentTemperature, fetchHachinoheForecast } from "@/lib/weather";
+import { fetchCurrentWeather, fetchHachinoheForecast } from "@/lib/weather";
 import Header from "@/components/Header";
 import IosPwaGuideBanner from "@/components/IosPwaGuideBanner";
 import FloatingPostButton from "@/components/FloatingPostButton";
 import PostDetailSheet from "@/components/PostDetailSheet";
 import WeatherCircle from "@/components/WeatherCircle";
+import WindArrow, { degreesToCompass } from "@/components/WindArrow";
 import RefreshButton from "@/components/RefreshButton";
 import type { MapPost, MapPostGroup } from "@/components/OpenStreetMap";
 import AverageIntensityIndicator from "@/components/AverageIntensityIndicator";
@@ -32,25 +33,6 @@ type TodayForecast = {
 };
 
 const DOMAIN_NOTICE_DISMISSED_KEY = "domain_notice_dismissed_v1";
-
-const getWindDirectionArrow = (wind: string | null) => {
-  if (!wind) return "";
-
-  const directionOrder = [
-    { keyword: "北東", arrow: "↙️" },
-    { keyword: "南東", arrow: "↖️" },
-    { keyword: "北西", arrow: "↘️" },
-    { keyword: "南西", arrow: "↗️" },
-    { keyword: "北", arrow: "⬇️" },
-    { keyword: "南", arrow: "⬆️" },
-    { keyword: "東", arrow: "⬅️" },
-    { keyword: "西", arrow: "➡️" },
-  ];
-
-  const matched = directionOrder.find(({ keyword }) => wind.includes(keyword));
-
-  return matched?.arrow ?? "🧭";
-};
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
@@ -126,14 +108,16 @@ export default function Home() {
   }, []);
 
   const [currentTemp, setCurrentTemp] = useState<number | null>(null);
+  const [currentWindDir, setCurrentWindDir] = useState<number | null>(null);
   const [isLoadingTemp, setIsLoadingTemp] = useState(true);
   const [tempError, setTempError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadCurrentTemp = async () => {
+    const loadCurrentWeather = async () => {
       try {
-        const temp = await fetchCurrentTemperature(40.5086, 141.482);
-        setCurrentTemp(temp);
+        const weather = await fetchCurrentWeather(40.5086, 141.482);
+        setCurrentTemp(weather.temperature);
+        setCurrentWindDir(weather.windDirection);
       } catch (err) {
         setTempError(
           err instanceof Error ? err.message : "気温の取得に失敗しました。",
@@ -143,7 +127,7 @@ export default function Home() {
       }
     };
 
-    void loadCurrentTemp();
+    void loadCurrentWeather();
   }, []);
 
   const weatherCard = useMemo(() => {
@@ -152,7 +136,6 @@ export default function Home() {
         weather: "⛅",
         temperatureLabel: "--",
         temperatureTooltip: "気温を取得中...",
-        wind: "🌀",
         tooltip: "天気情報を取得中...",
       } as const;
     }
@@ -164,12 +147,9 @@ export default function Home() {
         temperatureTooltip: error
           ? `エラー: ${error}`
           : "気温情報が利用できません。",
-        wind: "🧭",
         tooltip: error ? `エラー: ${error}` : "天気情報が利用できません。",
       } as const;
     }
-
-    const windArrow = getWindDirectionArrow(forecast.wind);
 
     return {
       weather: forecast.weather.includes("雨")
@@ -187,7 +167,6 @@ export default function Home() {
         currentTemp !== null
           ? `現在気温: ${currentTemp.toFixed(1)}℃`
           : (tempError ?? "気温の取得に失敗しました。"),
-      wind: windArrow || "🧭",
       tooltip: `天気: ${forecast.weather}\n風向き: ${forecast.wind}`,
     } as const;
   }, [error, forecast, isLoading, currentTemp, isLoadingTemp, tempError]);
@@ -251,10 +230,11 @@ export default function Home() {
         wind: today?.detail.wind ?? "--",
       });
 
-      // 現在の気温を更新
+      // 現在の気温・風向を更新
       try {
-        const temp = await fetchCurrentTemperature(40.5086, 141.482);
-        setCurrentTemp(temp);
+        const weather = await fetchCurrentWeather(40.5086, 141.482);
+        setCurrentTemp(weather.temperature);
+        setCurrentWindDir(weather.windDirection);
         setTempError(null);
       } catch (err) {
         setTempError(
@@ -298,9 +278,13 @@ export default function Home() {
           tooltip={weatherCard.temperatureTooltip}
         />
         <WeatherCircle
-          icon={weatherCard.wind}
+          icon={<WindArrow degrees={currentWindDir} size={26} />}
           label="風向"
-          tooltip={forecast?.wind ?? weatherCard.tooltip}
+          tooltip={
+            currentWindDir !== null
+              ? `風向: ${degreesToCompass(currentWindDir)}（${Math.round(currentWindDir)}°）${forecast?.wind ? `\n予報: ${forecast.wind}` : ""}`
+              : (forecast?.wind ?? weatherCard.tooltip)
+          }
         />
       </aside>
       <div className="pointer-events-auto absolute right-6 top-48 z-[1000] flex flex-col gap-2">

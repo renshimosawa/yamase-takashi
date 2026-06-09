@@ -14,6 +14,11 @@ export type MapPost = {
   smell_type: SmellType | null;
   emoji?: string | null;
   inserted_at?: string | null;
+  address?: string | null;
+  municipality?: string | null;
+  district?: string | null;
+  temperature?: number | null;
+  wind_direction?: number | null;
 };
 
 export type MapPostGroup = {
