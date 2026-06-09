@@ -443,6 +443,7 @@ export default function LandingPage() {
                     {"link" in faq && faq.link && (
                       <a
                         href={faq.link.url}
+                        target="_blank"
                         className="mt-2 inline-block text-cyan-700 underline hover:text-cyan-900"
                       >
                         {faq.link.label} →
@@ -480,7 +481,10 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-8 px-6 text-center text-xs">
-        <p>© {new Date().getFullYear()} ヤマセ君の知らせ — 八戸アイディアソン・ハッカソン2025</p>
+        <p>
+          © {new Date().getFullYear()} ヤマセ君の知らせ —
+          八戸アイディアソン・ハッカソン2025
+        </p>
       </footer>
     </main>
   );
