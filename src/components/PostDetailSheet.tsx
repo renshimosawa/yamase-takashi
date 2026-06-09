@@ -57,10 +57,6 @@ export default function PostDetailSheet({
                   {address}
                 </p>
               )}
-              <p className="text-sm text-slate-600">
-                緯度: {group.latitude.toFixed(6)}｜経度:{" "}
-                {group.longitude.toFixed(6)}
-              </p>
             </div>
             <button
               type="button"
