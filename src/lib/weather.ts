@@ -107,21 +107,74 @@ export async function fetchHachinoheForecast(): Promise<WeatherForecastResponse>
   return data;
 }
 
-type OpenMeteoResponse = {
-  latitude: number;
-  longitude: number;
-  generationtime_ms: number;
-  utc_offset_seconds: number;
-  timezone: string;
-  timezone_abbreviation: string;
-  elevation: number;
-  current?: {
-    time: string;
-    interval: number;
-    temperature_2m?: number;
-    wind_direction_10m?: number;
-  };
+// JMA AMeDAS types
+interface AmedasStation {
+  type: string;
+  elems: string;
+  lat: [number, number]; // [degrees, minutes]
+  lon: [number, number]; // [degrees, minutes]
+  alt: number;
+  kjName: string;
+  knName: string;
+  enName: string;
+}
+
+type AmedasTable = Record<string, AmedasStation>;
+
+type AmedasObservation = {
+  windDirection?: [number, number]; // [16-direction value, quality flag]
+  wind?: [number, number];
+  temp?: [number, number];
+  [key: string]: unknown;
 };
+
+type AmedasPointData = Record<string, AmedasObservation>;
+
+// AMeDAS 16-direction to degrees (0=calm, 1=NNE, 2=NE, ..., 16=N)
+const AMEDAS_DIR_TO_DEG: (number | null)[] = [
+  null,  // 0: calm
+  22.5,  // 1: NNE
+  45,    // 2: NE
+  67.5,  // 3: ENE
+  90,    // 4: E
+  112.5, // 5: ESE
+  135,   // 6: SE
+  157.5, // 7: SSE
+  180,   // 8: S
+  202.5, // 9: SSW
+  225,   // 10: SW
+  247.5, // 11: WSW
+  270,   // 12: W
+  292.5, // 13: WNW
+  315,   // 14: NW
+  337.5, // 15: NNW
+  0,     // 16: N
+];
+
+function toDecimalDeg(d: [number, number]): number {
+  return d[0] + d[1] / 60;
+}
+
+function haversineDist(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function amedasBlockUrl(stationId: string, date: Date): string {
+  const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  const y = jst.getUTCFullYear();
+  const m = String(jst.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(jst.getUTCDate()).padStart(2, "0");
+  const blockHour = String(Math.floor(jst.getUTCHours() / 3) * 3).padStart(2, "0");
+  return `https://www.jma.go.jp/bosai/amedas/data/point/${stationId}/${y}${m}${d}_${blockHour}.json`;
+}
 
 export type CurrentWeather = {
   temperature: number | null;
@@ -132,30 +185,56 @@ export async function fetchCurrentWeather(
   latitude: number,
   longitude: number
 ): Promise<CurrentWeather> {
-  const url = new URL("https://api.open-meteo.com/v1/forecast");
-  url.searchParams.set("latitude", latitude.toString());
-  url.searchParams.set("longitude", longitude.toString());
-  url.searchParams.set("current", "temperature_2m,wind_direction_10m");
-  url.searchParams.set("timezone", "Asia/Tokyo");
+  // 1. Find nearest AMeDAS station
+  const tableRes = await fetch(
+    "https://www.jma.go.jp/bosai/amedas/const/amedastable.json",
+    { cache: "no-store" }
+  );
+  if (!tableRes.ok) return { temperature: null, windDirection: null };
+  const table = (await tableRes.json()) as AmedasTable;
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch current weather: ${response.status} ${response.statusText}`
-    );
+  let nearestId = "";
+  let nearestDist = Infinity;
+  for (const [id, st] of Object.entries(table)) {
+    const dist = haversineDist(latitude, longitude, toDecimalDeg(st.lat), toDecimalDeg(st.lon));
+    if (dist < nearestDist) {
+      nearestDist = dist;
+      nearestId = id;
+    }
   }
+  if (!nearestId) return { temperature: null, windDirection: null };
 
-  const data = (await response.json()) as OpenMeteoResponse;
-  return {
-    temperature: data.current?.temperature_2m ?? null,
-    windDirection: data.current?.wind_direction_10m ?? null,
-  };
+  // 2. Try current 3-hour block, then previous as fallback
+  const now = new Date();
+  let data: AmedasPointData | null = null;
+  for (let offset = 0; offset <= 1; offset++) {
+    const date = new Date(now.getTime() - offset * 3 * 60 * 60 * 1000);
+    try {
+      const res = await fetch(amedasBlockUrl(nearestId, date), { cache: "no-store" });
+      if (res.ok) {
+        data = (await res.json()) as AmedasPointData;
+        break;
+      }
+    } catch {
+      // try previous block
+    }
+  }
+  if (!data) return { temperature: null, windDirection: null };
+
+  // 3. Extract latest entry
+  const keys = Object.keys(data).sort().reverse();
+  for (const key of keys) {
+    const obs = data[key];
+    if (obs.temp || obs.windDirection) {
+      return {
+        temperature: obs.temp ? obs.temp[0] : null,
+        windDirection: obs.windDirection
+          ? (AMEDAS_DIR_TO_DEG[obs.windDirection[0]] ?? null)
+          : null,
+      };
+    }
+  }
+  return { temperature: null, windDirection: null };
 }
 
 export async function fetchCurrentTemperature(
