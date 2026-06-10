@@ -60,6 +60,7 @@ type CreatePostRequest = {
   emoji?: string | null;
   temperature?: number | null;
   wind_direction?: number | null;
+  weather?: string | null;
 };
 
 const truncateText = (text: string, maxLength: number) =>
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreatePostRequest;
-    const { description, smell_type, latitude, longitude, intensity, emoji, temperature, wind_direction } =
+    const { description, smell_type, latitude, longitude, intensity, emoji, temperature, wind_direction, weather } =
       body;
 
     if (!description || description.trim().length === 0) {
@@ -214,6 +215,9 @@ export async function POST(request: Request) {
 
     const sanitizedEmoji =
       typeof emoji === "string" ? emoji.trim() || null : null;
+
+    const sanitizedWeather =
+      typeof weather === "string" ? weather.trim().slice(0, 100) || null : null;
 
     if (normalizedIntensity !== null && normalizedIntensity > 0) {
       if (!smell_type) {
@@ -267,6 +271,7 @@ export async function POST(request: Request) {
       longitude: longitude ?? null,
       temperature: temperature ?? null,
       wind_direction: wind_direction ?? null,
+      weather: sanitizedWeather,
       address: geocoded.address,
       municipality: geocoded.municipality,
       district: geocoded.district,
@@ -311,7 +316,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("posts")
       .select(
-        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at, address, municipality, district, temperature, wind_direction",
+        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at, address, municipality, district, temperature, wind_direction, weather",
       )
       .gte("inserted_at", start)
       .lte("inserted_at", end)
