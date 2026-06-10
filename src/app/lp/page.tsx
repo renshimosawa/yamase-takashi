@@ -360,9 +360,9 @@ export default function LandingPage() {
               </div>
               <div className="mt-auto flex justify-center">
                 <Image
-                  src="/ad_secTitle.png"
+                  src="/demo_ad.png"
                   alt="広告機能"
-                  width={140}
+                  width={200}
                   height={50}
                   className="object-contain opacity-80"
                 />
