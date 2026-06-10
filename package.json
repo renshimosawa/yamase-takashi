@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 8090",
     "dev:staging": "dotenv -e .env.development -- next dev -p 8090",
     "build": "next build",
     "build:staging": "dotenv -e .env.development -- next build",
-    "start": "next start",
+    "start": "next start -p 8090",
     "start:staging": "dotenv -e .env.development -- next start -p 8090"
   },
   "dependencies": {
