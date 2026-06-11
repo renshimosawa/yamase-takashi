@@ -34,6 +34,55 @@ type TodayForecast = {
 
 const DOMAIN_NOTICE_DISMISSED_KEY = "domain_notice_dismissed_v1";
 
+// AMeDAS自動観測天気（weather値）に対応する絵文字
+const AMEDAS_WEATHER_EMOJI: Record<string, string> = {
+  晴れ: "☀️",
+  くもり: "☁️",
+  煙霧: "🌫️",
+  霧: "🌫️",
+  降水: "🌧️",
+  霧雨: "🌦️",
+  着氷性の霧雨: "🌧️",
+  雨: "🌧️",
+  着氷性の雨: "🌧️",
+  みぞれ: "🌨️",
+  雪: "❄️",
+  凍雨: "🌨️",
+  霧雪: "🌨️",
+  しゅう雨: "🌦️",
+  しゅう雪: "🌨️",
+  ひょう: "🧊",
+  雷: "⛈️",
+};
+
+// 天気文字列を絵文字に変換。
+// AMeDASのweather値は完全一致、予報（tsukumijima）の複合文字列は部分一致で判定。
+const weatherToEmoji = (weather: string): string => {
+  const exact = AMEDAS_WEATHER_EMOJI[weather];
+  if (exact) return exact;
+
+  const has = (...keys: string[]) => keys.some((k) => weather.includes(k));
+
+  // 荒天・特殊現象を優先
+  if (has("雷")) return "⛈️";
+  if (has("ひょう", "雹")) return "🧊";
+  if (has("みぞれ")) return "🌨️";
+  if (has("雪")) return has("晴") ? "🌨️" : "❄️";
+  if (has("霧雨")) return "🌦️";
+  if (has("霧", "もや", "煙霧")) return "🌫️";
+
+  // 雨（晴との組み合わせで通り雨・一時雨を表現）
+  if (has("大雨", "豪雨", "暴風雨")) return "🌧️";
+  if (has("雨", "降水")) return has("晴") ? "🌦️" : "🌧️";
+
+  // 晴れ・曇りの組み合わせ
+  if (has("晴") && has("曇", "くもり")) return "⛅";
+  if (has("曇", "くもり")) return "☁️";
+  if (has("快晴", "晴")) return "☀️";
+
+  return "⛅";
+};
+
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
   const [authStatus, setAuthStatus] = useState<
@@ -109,6 +158,8 @@ export default function Home() {
 
   const [currentTemp, setCurrentTemp] = useState<number | null>(null);
   const [currentWindDir, setCurrentWindDir] = useState<number | null>(null);
+  const [currentWindSpeed, setCurrentWindSpeed] = useState<number | null>(null);
+  const [currentWeather, setCurrentWeather] = useState<string | null>(null);
   const [isLoadingTemp, setIsLoadingTemp] = useState(true);
   const [tempError, setTempError] = useState<string | null>(null);
 
@@ -118,6 +169,8 @@ export default function Home() {
         const weather = await fetchCurrentWeather(40.5086, 141.482);
         setCurrentTemp(weather.temperature);
         setCurrentWindDir(weather.windDirection);
+        setCurrentWindSpeed(weather.windSpeed);
+        setCurrentWeather(weather.weather);
       } catch (err) {
         setTempError(
           err instanceof Error ? err.message : "気温の取得に失敗しました。",
@@ -152,11 +205,7 @@ export default function Home() {
     }
 
     return {
-      weather: forecast.weather.includes("雨")
-        ? "🌧️"
-        : forecast.weather.includes("晴")
-          ? "☀️"
-          : "⛅",
+      weather: weatherToEmoji(currentWeather ?? forecast.weather),
       temperatureLabel:
         currentTemp !== null
           ? `${currentTemp.toFixed(1)}℃`
@@ -167,9 +216,17 @@ export default function Home() {
         currentTemp !== null
           ? `現在気温: ${currentTemp.toFixed(1)}℃`
           : (tempError ?? "気温の取得に失敗しました。"),
-      tooltip: `天気: ${forecast.weather}\n風向き: ${forecast.wind}`,
+      tooltip: `天気: ${currentWeather ?? forecast.weather}\n風向き: ${forecast.wind}`,
     } as const;
-  }, [error, forecast, isLoading, currentTemp, isLoadingTemp, tempError]);
+  }, [
+    error,
+    forecast,
+    isLoading,
+    currentTemp,
+    currentWeather,
+    isLoadingTemp,
+    tempError,
+  ]);
 
   const [posts, setPosts] = useState<MapPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
@@ -235,6 +292,8 @@ export default function Home() {
         const weather = await fetchCurrentWeather(40.5086, 141.482);
         setCurrentTemp(weather.temperature);
         setCurrentWindDir(weather.windDirection);
+        setCurrentWindSpeed(weather.windSpeed);
+        setCurrentWeather(weather.weather);
         setTempError(null);
       } catch (err) {
         setTempError(
@@ -278,11 +337,20 @@ export default function Home() {
           tooltip={weatherCard.temperatureTooltip}
         />
         <WeatherCircle
-          icon={<WindArrow degrees={currentWindDir} size={26} />}
-          label="風向"
+          icon={
+            <span className="flex flex-col items-center justify-center leading-none">
+              <WindArrow degrees={currentWindDir} size={22} />
+              {currentWindSpeed !== null && (
+                <span className="mt-0.5 text-[9px] font-medium text-white/90">
+                  {currentWindSpeed.toFixed(1)}m/s
+                </span>
+              )}
+            </span>
+          }
+          label="風"
           tooltip={
             currentWindDir !== null
-              ? `風向: ${degreesToCompass(currentWindDir)}（${Math.round(currentWindDir)}°）${forecast?.wind ? `\n予報: ${forecast.wind}` : ""}`
+              ? `風向: ${degreesToCompass(currentWindDir)}（${Math.round(currentWindDir)}°）${currentWindSpeed !== null ? `\n風速: ${currentWindSpeed.toFixed(1)}m/s` : ""}${forecast?.wind ? `\n予報: ${forecast.wind}` : ""}`
               : (forecast?.wind ?? weatherCard.tooltip)
           }
         />

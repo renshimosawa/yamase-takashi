@@ -11,7 +11,7 @@ import {
   type SmellType,
 } from "@/constants/smell";
 import EmojiPicker from "@/components/EmojiPicker";
-import { fetchCurrentWeather, fetchHachinoheForecast } from "@/lib/weather";
+import { fetchCurrentWeather } from "@/lib/weather";
 
 export type PostFormProps = {
   onSubmitted: () => Promise<void> | void;
@@ -47,6 +47,18 @@ type WeatherState = {
   temperature: number | null;
   windDirection: number | null;
   weather: string | null;
+  windSpeed: number | null;
+  pressure: number | null;
+  normalPressure: number | null;
+};
+
+const emptyWeather: WeatherState = {
+  temperature: null,
+  windDirection: null,
+  weather: null,
+  windSpeed: null,
+  pressure: null,
+  normalPressure: null,
 };
 
 const initialFormState: PostFormState = {
@@ -91,11 +103,7 @@ export default function PostForm({
     error: null,
   });
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-  const [weather, setWeather] = useState<WeatherState>({
-    temperature: null,
-    windDirection: null,
-    weather: null,
-  });
+  const [weather, setWeather] = useState<WeatherState>(emptyWeather);
   const emojiPickerWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const requestLocation = useCallback(async () => {
@@ -131,21 +139,16 @@ export default function PostForm({
 
       fetchCurrentWeather(coords.latitude, coords.longitude)
         .then((w) =>
-          setWeather((prev) => ({
-            ...prev,
+          setWeather({
             temperature: w.temperature,
             windDirection: w.windDirection,
-          }))
+            weather: w.weather,
+            windSpeed: w.windSpeed,
+            pressure: w.pressure,
+            normalPressure: w.normalPressure,
+          })
         )
         .catch((err) => console.error("Failed to fetch weather", err));
-
-      fetchHachinoheForecast()
-        .then((data) => {
-          const today = data.forecasts[0];
-          const telop = today?.detail.weather ?? today?.telop ?? null;
-          setWeather((prev) => ({ ...prev, weather: telop }));
-        })
-        .catch((err) => console.error("Failed to fetch forecast", err));
     } catch (err) {
       console.error("Failed to get current position", err);
       setLocationState({
@@ -161,7 +164,7 @@ export default function PostForm({
       setForm({ ...initialFormState });
       setMessage(null);
       setLocationState({ status: "idle", coordinates: null, error: null });
-      setWeather({ temperature: null, windDirection: null, weather: null });
+      setWeather(emptyWeather);
       setIsEmojiPickerOpen(false);
       return;
     }
@@ -268,6 +271,9 @@ export default function PostForm({
           temperature: weather.temperature,
           wind_direction: weather.windDirection,
           weather: weather.weather,
+          wind: weather.windSpeed,
+          pressure: weather.pressure,
+          normal_pressure: weather.normalPressure,
         }),
       });
 
