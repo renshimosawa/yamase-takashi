@@ -200,6 +200,28 @@ function amedasBlockUrl(stationId: string, date: Date): string {
   return `https://www.jma.go.jp/bosai/amedas/data/point/${stationId}/${y}${m}${d}_${blockHour}.json`;
 }
 
+// JMAが公開する「最新観測時刻」を取得（取れなければ現在時刻にフォールバック）。
+// これを基準にブロックを決めることで、クロックずれやブロック切替直後でも
+// 確実に最新の配信データを掴める。
+async function fetchAmedasLatestTime(): Promise<Date> {
+  try {
+    const res = await fetch(
+      "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt",
+      { cache: "no-store" }
+    );
+    if (res.ok) {
+      const text = (await res.text()).trim();
+      const parsed = new Date(text);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+  } catch {
+    // fall back to local clock
+  }
+  return new Date();
+}
+
 export type CurrentWeather = {
   temperature: number | null;
   windDirection: number | null;
@@ -256,11 +278,12 @@ export async function fetchCurrentWeather(
   }
   if (!nearestId) return EMPTY_WEATHER;
 
-  // 2. Try current 3-hour block, then previous as fallback
-  const now = new Date();
+  // 2. Resolve the block from JMA's latest observation time, then fall back to
+  //    the previous block if the newest one isn't published yet.
+  const latestTime = await fetchAmedasLatestTime();
   let data: AmedasPointData | null = null;
   for (let offset = 0; offset <= 1; offset++) {
-    const date = new Date(now.getTime() - offset * 3 * 60 * 60 * 1000);
+    const date = new Date(latestTime.getTime() - offset * 3 * 60 * 60 * 1000);
     try {
       const res = await fetch(amedasBlockUrl(nearestId, date), { cache: "no-store" });
       if (res.ok) {
