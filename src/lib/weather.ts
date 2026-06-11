@@ -123,12 +123,36 @@ type AmedasTable = Record<string, AmedasStation>;
 
 type AmedasObservation = {
   windDirection?: [number, number]; // [16-direction value, quality flag]
-  wind?: [number, number];
+  wind?: [number, number]; // [wind speed m/s, quality flag]
   temp?: [number, number];
+  pressure?: [number, number]; // [hPa, quality flag]
+  normalPressure?: [number, number]; // [sea-level corrected hPa, quality flag]
+  weather?: [number, number]; // [weather code, quality flag] (hourly entries only)
   [key: string]: unknown;
 };
 
 type AmedasPointData = Record<string, AmedasObservation>;
+
+// AMeDAS auto-observed weather codes
+const AMEDAS_WEATHER_NAMES: Record<number, string> = {
+  0: "晴れ",
+  1: "くもり",
+  2: "煙霧",
+  3: "霧",
+  4: "降水",
+  5: "霧雨",
+  6: "着氷性の霧雨",
+  7: "雨",
+  8: "着氷性の雨",
+  9: "みぞれ",
+  10: "雪",
+  11: "凍雨",
+  12: "霧雪",
+  13: "しゅう雨",
+  14: "しゅう雪",
+  15: "ひょう",
+  16: "雷",
+};
 
 // AMeDAS 16-direction to degrees (0=calm, 1=NNE, 2=NE, ..., 16=N)
 const AMEDAS_DIR_TO_DEG: (number | null)[] = [
@@ -179,7 +203,35 @@ function amedasBlockUrl(stationId: string, date: Date): string {
 export type CurrentWeather = {
   temperature: number | null;
   windDirection: number | null;
+  windSpeed: number | null;
+  pressure: number | null;
+  normalPressure: number | null;
+  weather: string | null;
 };
+
+const EMPTY_WEATHER: CurrentWeather = {
+  temperature: null,
+  windDirection: null,
+  windSpeed: null,
+  pressure: null,
+  normalPressure: null,
+  weather: null,
+};
+
+// Pick the latest (entries sorted desc) value for a field across observations
+function pickLatest(
+  data: AmedasPointData,
+  keys: string[],
+  field: keyof AmedasObservation
+): number | null {
+  for (const key of keys) {
+    const value = data[key][field];
+    if (Array.isArray(value) && typeof value[0] === "number") {
+      return value[0];
+    }
+  }
+  return null;
+}
 
 export async function fetchCurrentWeather(
   latitude: number,
@@ -190,7 +242,7 @@ export async function fetchCurrentWeather(
     "https://www.jma.go.jp/bosai/amedas/const/amedastable.json",
     { cache: "no-store" }
   );
-  if (!tableRes.ok) return { temperature: null, windDirection: null };
+  if (!tableRes.ok) return EMPTY_WEATHER;
   const table = (await tableRes.json()) as AmedasTable;
 
   let nearestId = "";
@@ -202,7 +254,7 @@ export async function fetchCurrentWeather(
       nearestId = id;
     }
   }
-  if (!nearestId) return { temperature: null, windDirection: null };
+  if (!nearestId) return EMPTY_WEATHER;
 
   // 2. Try current 3-hour block, then previous as fallback
   const now = new Date();
@@ -219,22 +271,22 @@ export async function fetchCurrentWeather(
       // try previous block
     }
   }
-  if (!data) return { temperature: null, windDirection: null };
+  if (!data) return EMPTY_WEATHER;
 
-  // 3. Extract latest entry
+  // 3. Extract latest value per field (each field updates at its own interval;
+  //    weather is only present on hourly entries)
   const keys = Object.keys(data).sort().reverse();
-  for (const key of keys) {
-    const obs = data[key];
-    if (obs.temp || obs.windDirection) {
-      return {
-        temperature: obs.temp ? obs.temp[0] : null,
-        windDirection: obs.windDirection
-          ? (AMEDAS_DIR_TO_DEG[obs.windDirection[0]] ?? null)
-          : null,
-      };
-    }
-  }
-  return { temperature: null, windDirection: null };
+  const windDirCode = pickLatest(data, keys, "windDirection");
+  const weatherCode = pickLatest(data, keys, "weather");
+
+  return {
+    temperature: pickLatest(data, keys, "temp"),
+    windDirection: windDirCode !== null ? (AMEDAS_DIR_TO_DEG[windDirCode] ?? null) : null,
+    windSpeed: pickLatest(data, keys, "wind"),
+    pressure: pickLatest(data, keys, "pressure"),
+    normalPressure: pickLatest(data, keys, "normalPressure"),
+    weather: weatherCode !== null ? (AMEDAS_WEATHER_NAMES[weatherCode] ?? null) : null,
+  };
 }
 
 export async function fetchCurrentTemperature(

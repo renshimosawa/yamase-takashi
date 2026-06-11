@@ -61,6 +61,9 @@ type CreatePostRequest = {
   temperature?: number | null;
   wind_direction?: number | null;
   weather?: string | null;
+  wind?: number | null;
+  pressure?: number | null;
+  normal_pressure?: number | null;
 };
 
 const truncateText = (text: string, maxLength: number) =>
@@ -184,7 +187,7 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as CreatePostRequest;
-    const { description, smell_type, latitude, longitude, intensity, emoji, temperature, wind_direction, weather } =
+    const { description, smell_type, latitude, longitude, intensity, emoji, temperature, wind_direction, weather, wind, pressure, normal_pressure } =
       body;
 
     if (!description || description.trim().length === 0) {
@@ -272,6 +275,9 @@ export async function POST(request: Request) {
       temperature: temperature ?? null,
       wind_direction: wind_direction ?? null,
       weather: sanitizedWeather,
+      wind: wind ?? null,
+      pressure: pressure ?? null,
+      normal_pressure: normal_pressure ?? null,
       address: geocoded.address,
       municipality: geocoded.municipality,
       district: geocoded.district,
@@ -316,7 +322,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("posts")
       .select(
-        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at, address, municipality, district, temperature, wind_direction, weather",
+        "id, description, intensity, smell_type, emoji, latitude, longitude, inserted_at, address, municipality, district, temperature, wind_direction, weather, wind, pressure, normal_pressure",
       )
       .gte("inserted_at", start)
       .lte("inserted_at", end)
