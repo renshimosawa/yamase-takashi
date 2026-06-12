@@ -397,6 +397,29 @@ export default function LandingPage() {
           >
             ハッカソンの活動詳細を見る →
           </a>
+          <div className="mt-10">
+            <p className="text-slate-500 text-sm font-bold mb-4">
+              企画者・開発者の想い
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <a
+                href="https://note.com/oritsuru/n/nd7f43ca83909"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 font-bold py-3 px-6 rounded-full hover:border-slate-400 hover:text-slate-900 transition-colors duration-200 text-sm"
+              >
+                📝 企画者の記事（note）→
+              </a>
+              <a
+                href="https://zenn.dev/renshimosawa/articles/849ea0ebf78a24"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 font-bold py-3 px-6 rounded-full hover:border-slate-400 hover:text-slate-900 transition-colors duration-200 text-sm"
+              >
+                💻 開発者の記事（Zenn）→
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
