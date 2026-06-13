@@ -27,17 +27,26 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL("https://yamasekun.jp"),
     title: "ヤマセ君の知らせ",
     description:
-      "ヤマセ君情報を共有しよう。あなたが今いる所のにおいは、ほやですか？ドッグフードですか？",
+      "八戸のヤマセをみんなで記録・共有しよう。今いる場所のにおいは、ほやですか？ドッグフードですか？地図上でヤマセの強さや気温・風の状況をリアルタイムにチェックできる、八戸発の天気共有アプリです。",
+    keywords: [
+      "やませくん",
+      "ヤマセ君",
+      "ヤマセ君の知らせ",
+      "やませ",
+      "ヤマセ",
+      "八戸",
+      "八戸 ヤマセ",
+      "八戸 天気",
+    ],
     icons: {
       icon: "/favicon.ico",
       apple: isStaging ? "/yamasekun_stg.png" : "/favicon/apple-icon.png",
     },
     manifest: "/manifest.webmanifest",
     themeColor: "#ff5e62",
-    robots: {
-      index: false,
-      follow: true,
-    },
+    robots: isStaging
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
     alternates: {
       canonical: "https://yamasekun.jp/",
     },

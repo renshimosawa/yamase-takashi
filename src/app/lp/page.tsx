@@ -7,6 +7,16 @@ export const metadata: Metadata = {
   title: "ヤマセ君の知らせ｜八戸のヤマセと暮らし、つながる。",
   description:
     "八戸市民のアイデンティティ「ヤマセ」を可視化。匂いや霧の状況をみんなで共有し、憎めぬあいつ「ヤマセ君」と共に暮らすためのブラウザアプリ。",
+  keywords: [
+    "やませくん",
+    "ヤマセ君",
+    "ヤマセ君の知らせ",
+    "やませ",
+    "ヤマセ",
+    "八戸",
+    "八戸 ヤマセ",
+    "八戸 天気",
+  ],
   openGraph: {
     title: "ヤマセ君の知らせ｜八戸のヤマセと暮らし、つながる。",
     description:
@@ -87,9 +97,30 @@ const characterParts: CharacterPart[] = [
   },
 ];
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "ヤマセ君の知らせ",
+  alternateName: ["やませくん", "ヤマセ君", "やませ君", "ヤマセくん"],
+  url: "https://yamasekun.jp/",
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Web",
+  description:
+    "八戸のヤマセ情報をみんなで共有・蓄積するブラウザアプリ。",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "JPY",
+  },
+};
+
 export default function LandingPage() {
   return (
     <main className="overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ① Hero / FV */}
       <LpHeroRef>
         <section className="relative min-h-screen flex flex-col justify-center bg-gradient-to-br from-sky-100 via-cyan-50 to-slate-100 overflow-hidden">
